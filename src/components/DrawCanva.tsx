@@ -462,7 +462,7 @@ export const DrawCanva = () => {
       });
     }
 
-    return secciones.filter((line, index) => index % 2 === 0);
+    return secciones.filter((_, index) => index % 2 === 0);
   };
 
   // Llamar a la función y mostrar las coordenadas en consola
