@@ -620,7 +620,7 @@ export const DrawCanva = () => {
                         seccionPorton.xFin,
                         yPerfil, // Punto derecho del perfil
                       ]}
-                      stroke="blue"
+                      stroke="black"
                       strokeWidth={1}
                     />
                   ));
