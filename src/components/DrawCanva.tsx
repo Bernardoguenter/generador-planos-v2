@@ -400,7 +400,7 @@ export const DrawCanva = () => {
           Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) / scaleFactor;
         return { x1, y1, x2, y2, longitud };
       })
-      .filter((line, index) => index % 2 === 0)
+      .filter((_, index) => index % 2 === 0)
       .concat([
         {
           x1: xAxis + finalColsValues[finalColsValues.length - 1] * scaleFactor,
