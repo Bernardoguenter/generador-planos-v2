@@ -371,10 +371,12 @@ export const DrawCanva = () => {
   };
 
   const calcularAltoPerfiles = (perfiles: number) => {
-    return perfiles > 0 && alto > 0
-      ? (alto - separacionPrimerPerfil) / (perfiles + 1)
+    const alturaDisponible = cerramiento - separacionPrimerPerfil;
+    return perfiles > 0 && alturaDisponible > 0
+      ? alturaDisponible / (perfiles + 1)
       : 0;
   };
+  console.log(calcularAltoPerfiles(perfiles));
 
   // Calcular el alto de cada perfil
   const altoPerfil = calcularAltoPerfiles(perfiles);
@@ -385,6 +387,8 @@ export const DrawCanva = () => {
     (_, i) => separacionPrimerPerfil + i * altoPerfil
   );
 
+  console.log(perfilesArr);
+
   // Calcular las coordenadas de los perfiles
   const perfilesLines = perfilesArr.map((altura) => {
     return finalColsValues
@@ -393,7 +397,7 @@ export const DrawCanva = () => {
           index === 0
             ? xAxis + anchoColumna * scaleFactor
             : xAxis + finalColsValues[index - 1] * scaleFactor;
-        const y1 = yAxis + (alto - altoPozo - altura) * scaleFactor;
+        const y1 = (yAxis + cerramiento - altura) * scaleFactor;
         const x2 = xAxis + columna * scaleFactor;
         const y2 = y1;
         const longitud =
@@ -404,9 +408,9 @@ export const DrawCanva = () => {
       .concat([
         {
           x1: xAxis + finalColsValues[finalColsValues.length - 1] * scaleFactor,
-          y1: yAxis + (alto - altoPozo - altura) * scaleFactor,
+          y1: (yAxis + cerramiento - altura) * scaleFactor,
           x2: xAxis + (ancho - anchoColumna) * scaleFactor,
-          y2: yAxis + (alto - altoPozo - altura) * scaleFactor,
+          y2: (yAxis + cerramiento - altura) * scaleFactor,
           longitud:
             Math.sqrt(
               Math.pow(
@@ -485,53 +489,6 @@ export const DrawCanva = () => {
           style={{ border: "1px solid black" }}
           ref={stageRef}>
           <Layer>
-            {/*  {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
-              <>
-                {(() => {
-                  // Calcular el índice de la sección del portón
-                  const seccionPortonIndex = ubicacionPorton - 1; // Restar 1 porque los índices del array empiezan en 0
-                  const seccionPorton = secciones[seccionPortonIndex];
-
-                  if (!seccionPorton) return null;
-
-                  // Calcular el punto donde termina la columna en la línea del pico
-                  const columnaPorton = finalColsValues[seccionPortonIndex];
-                  const { puntos } = puntosColumna(columnaPorton);
-                  const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
-
-                  // Calcular la distancia vertical entre el techo del portón y el límite superior
-                  const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
-
-                  // Calcular la separación entre perfiles
-                  const separacionPerfiles =
-                    alturaDisponible / ((cantidadPerfilesSobrePorton ?? 0) + 1);
-
-                  // Dibujar los perfiles sobre el portón
-                  return Array.from(
-                    { length: cantidadPerfilesSobrePorton ?? 0 },
-                    (_, i) => {
-                      const yPerfil =
-                        seccionPorton.yFin + separacionPerfiles * (i + 1);
-
-                      return (
-                        <Line
-                          key={`perfil-sobre-porton-${i}`}
-                          points={[
-                            seccionPorton.xInicio,
-                            yPerfil, // Punto izquierdo del perfil
-                            seccionPorton.xFin,
-                            yPerfil, // Punto derecho del perfil
-                          ]}
-                          stroke="blue"
-                          strokeWidth={1}
-                        />
-                      );
-                    }
-                  );
-                })()}
-              </>
-            )}
-
             {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
               <>
                 {(() => {
@@ -548,57 +505,6 @@ export const DrawCanva = () => {
 
                   // Calcular la distancia vertical entre el techo del portón y el límite superior
                   const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
-
-                  // Verificar si hay al menos 2 perfiles
-                  if ((cantidadPerfilesSobrePorton ?? 0) < 2) return null;
-
-                  // Calcular el alto de cada perfil
-                  const altoPerfil =
-                    alturaDisponible / ((cantidadPerfilesSobrePorton ?? 0) + 1);
-
-                  // Crear array de perfiles
-                  const perfilesSobrePorton = Array.from(
-                    { length: cantidadPerfilesSobrePorton ?? 0 },
-                    (_, i) => seccionPorton.yFin + altoPerfil * (i + 1)
-                  );
-
-                  // Dibujar los perfiles sobre el portón
-                  return perfilesSobrePorton.map((yPerfil, i) => (
-                    <Line
-                      key={`perfil-sobre-porton-${i}`}
-                      points={[
-                        seccionPorton.xInicio,
-                        yPerfil, // Punto izquierdo del perfil
-                        seccionPorton.xFin,
-                        yPerfil, // Punto derecho del perfil
-                      ]}
-                      stroke="blue"
-                      strokeWidth={1}
-                    />
-                  ));
-                })()}
-              </>
-            )} */}
-
-            {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
-              <>
-                {(() => {
-                  // Calcular el índice de la sección del portón
-                  const seccionPortonIndex = ubicacionPorton - 1; // Restar 1 porque los índices del array empiezan en 0
-                  const seccionPorton = secciones[seccionPortonIndex];
-
-                  if (!seccionPorton) return null;
-
-                  // Calcular el punto donde termina la columna en la línea del pico
-                  const columnaPorton = finalColsValues[seccionPortonIndex];
-                  const { puntos } = puntosColumna(columnaPorton);
-                  const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
-
-                  // Calcular la distancia vertical entre el techo del portón y el límite superior
-                  const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
-
-                  // Verificar si hay al menos 2 perfiles
-                  if ((cantidadPerfilesSobrePorton ?? 0) < 2) return null;
 
                   // Calcular el alto de cada perfil
                   const altoPerfil =
@@ -940,9 +846,9 @@ export const DrawCanva = () => {
             <Line
               points={[
                 xAxis + (ancho + 40) * scaleFactor,
-                yAxis + (alto - altoPozo) * scaleFactor, // Esquina inferior derecha
+                yAxis, // Esquina inferior derecha
                 xAxis + (ancho + 40) * scaleFactor,
-                yAxis + (alto - cerramiento) * scaleFactor, // Esquina superior derecha
+                (yAxis + cerramiento) * scaleFactor, // Esquina superior derecha
               ]}
               strokeWidth={1}
               stroke={"black"}
@@ -951,7 +857,7 @@ export const DrawCanva = () => {
               text={`Cerramiento: ${Math.ceil(cerramiento)}cm`}
               rotation={90}
               x={xAxis + (ancho + 60) * scaleFactor}
-              y={(yAxis + (alto - cerramiento)) * 2 * scaleFactor}
+              y={((yAxis + cerramiento) / 2) * scaleFactor}
             />
             {/* Estructura interna */}
             <Line
@@ -979,8 +885,8 @@ export const DrawCanva = () => {
             )}
             <Text
               text={`Galpón de ${ancho / 100}mts de ancho x ${
-                alto / 100
-              }mts de alto x ${largo / 100}mts de largo - ${
+                largo / 100
+              }mts de largo x ${alto / 100}mts de alto  - ${
                 esFrente ? "Frente" : "Fondo"
               }`}
               x={0 + innerWidth / 5}
