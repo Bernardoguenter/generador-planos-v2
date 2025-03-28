@@ -331,7 +331,7 @@ export const DrawCanva = () => {
           xColumna,
           yBasePico, // Punto superior (basePico)
           xColumna,
-          yAxis + alto * scaleFactor, // Punto inferior (base)
+          yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
         ],
         alturaColumna,
       };
@@ -350,7 +350,7 @@ export const DrawCanva = () => {
           xColumna,
           yTecho, // Punto superior (techo interno)
           xColumna,
-          yAxis + alto * scaleFactor, // Punto inferior (base)
+          yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
         ],
         alturaColumna,
       };
@@ -364,7 +364,7 @@ export const DrawCanva = () => {
         xAxis + columna * scaleFactor,
         yAxis - (pico - lineaPico) * scaleFactor, // Punto superior (borde superior)
         xAxis + columna * scaleFactor,
-        yAxis + alto * scaleFactor, // Punto inferior (base)
+        yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
       ],
       alturaColumna,
     };
@@ -373,10 +373,9 @@ export const DrawCanva = () => {
   const calcularAltoPerfiles = (perfiles: number) => {
     const alturaDisponible = cerramiento - separacionPrimerPerfil;
     return perfiles > 0 && alturaDisponible > 0
-      ? alturaDisponible / (perfiles + 1)
+      ? alturaDisponible / perfiles
       : 0;
   };
-  console.log(calcularAltoPerfiles(perfiles));
 
   // Calcular el alto de cada perfil
   const altoPerfil = calcularAltoPerfiles(perfiles);
@@ -387,8 +386,6 @@ export const DrawCanva = () => {
     (_, i) => separacionPrimerPerfil + i * altoPerfil
   );
 
-  console.log(perfilesArr);
-
   // Calcular las coordenadas de los perfiles
   const perfilesLines = perfilesArr.map((altura) => {
     return finalColsValues
@@ -397,9 +394,10 @@ export const DrawCanva = () => {
           index === 0
             ? xAxis + anchoColumna * scaleFactor
             : xAxis + finalColsValues[index - 1] * scaleFactor;
-        const y1 = (yAxis + cerramiento - altura) * scaleFactor;
+        const y1 = yAxis + (cerramiento - altura) * scaleFactor;
         const x2 = xAxis + columna * scaleFactor;
         const y2 = y1;
+
         const longitud =
           Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) / scaleFactor;
         return { x1, y1, x2, y2, longitud };
@@ -408,9 +406,9 @@ export const DrawCanva = () => {
       .concat([
         {
           x1: xAxis + finalColsValues[finalColsValues.length - 1] * scaleFactor,
-          y1: (yAxis + cerramiento - altura) * scaleFactor,
+          y1: yAxis + (cerramiento - altura) * scaleFactor,
           x2: xAxis + (ancho - anchoColumna) * scaleFactor,
-          y2: (yAxis + cerramiento - altura) * scaleFactor,
+          y2: yAxis + (cerramiento - altura) * scaleFactor,
           longitud:
             Math.sqrt(
               Math.pow(
@@ -455,7 +453,7 @@ export const DrawCanva = () => {
         xFin -= anchoColumna * scaleFactor;
       }
 
-      const yInicio = yAxis + (alto - altoPozo) * scaleFactor; // Base ajustada al altoPozo
+      const yInicio = yAxis + (alturaTotal - altoPozo) * scaleFactor; // Base ajustada al altoPozo
       const yFin = yAxis + (alto - (altoPorton ?? 0)) * scaleFactor; // Altura del portón medida desde yInicio
 
       secciones.push({
@@ -636,7 +634,7 @@ export const DrawCanva = () => {
                 />
                 <Text
                   key={`col-text-even-${index}`}
-                  text={`${Math.ceil(fijaCorreasArr[index])}cm`}
+                  text={`${Math.ceil(fijaCorreasArr[index])}`}
                   x={line.x1 - 15}
                   y={line.y1 - 20}
                   fontSize={12}
@@ -747,9 +745,9 @@ export const DrawCanva = () => {
             <Line
               points={[
                 xAxis,
-                yAxis + (alto - altoPozo) * scaleFactor, // Esquina inferior izquierda
+                yAxis + (alturaTotal - altoPozo) * scaleFactor, // Esquina inferior izquierda
                 xAxis + ancho * scaleFactor,
-                yAxis + (alto - altoPozo) * scaleFactor, // Esquina inferior derecha
+                yAxis + (alturaTotal - altoPozo) * scaleFactor, // Esquina inferior derecha
               ]}
               strokeWidth={1}
               stroke={"black"}
@@ -758,7 +756,7 @@ export const DrawCanva = () => {
               text={`${Math.ceil(altoPozo)}cm`}
               rotation={90}
               x={xAxis - scaleFactor}
-              y={yAxis + (alto - altoPozo) * scaleFactor}
+              y={yAxis + (alturaTotal - altoPozo) * scaleFactor}
             />
             {/* Líneas perpendiculares Largo Caja (Entre estructura interana y techo interno) */}
             <Line
@@ -833,9 +831,9 @@ export const DrawCanva = () => {
                 xAxis,
                 yAxis, // Esquina superior izquierda
                 xAxis,
-                yAxis + alto * scaleFactor, // Esquina inferior izquierda
+                yAxis + alturaTotal * scaleFactor, // Esquina inferior izquierda
                 xAxis + ancho * scaleFactor,
-                yAxis + alto * scaleFactor, // Esquina inferior derecha
+                yAxis + alturaTotal * scaleFactor, // Esquina inferior derecha
                 xAxis + ancho * scaleFactor,
                 yAxis, // Esquina superior derecha
               ]}
@@ -846,9 +844,9 @@ export const DrawCanva = () => {
             <Line
               points={[
                 xAxis + (ancho + 40) * scaleFactor,
-                yAxis, // Esquina inferior derecha
+                yAxis,
                 xAxis + (ancho + 40) * scaleFactor,
-                (yAxis + cerramiento) * scaleFactor, // Esquina superior derecha
+                yAxis + cerramiento * scaleFactor,
               ]}
               strokeWidth={1}
               stroke={"black"}
@@ -856,8 +854,8 @@ export const DrawCanva = () => {
             <Text
               text={`Cerramiento: ${Math.ceil(cerramiento)}cm`}
               rotation={90}
-              x={xAxis + (ancho + 60) * scaleFactor}
-              y={((yAxis + cerramiento) / 2) * scaleFactor}
+              x={xAxis + (ancho + 70) * scaleFactor}
+              y={yAxis + (alto - cerramiento) * scaleFactor}
             />
             {/* Estructura interna */}
             <Line
@@ -865,9 +863,9 @@ export const DrawCanva = () => {
                 xAxis + anchoColumna * scaleFactor,
                 yAxis + catetoAdyacente * scaleFactor, // Esquina superior izquierda
                 xAxis + anchoColumna * scaleFactor,
-                yAxis + alto * scaleFactor, // Esquina inferior izquierda
+                yAxis + alturaTotal * scaleFactor, // Esquina inferior izquierda
                 xAxis - anchoColumna * scaleFactor + ancho * scaleFactor,
-                yAxis + alto * scaleFactor, // Esquina inferior derecha
+                yAxis + alturaTotal * scaleFactor, // Esquina inferior derecha
                 xAxis - anchoColumna * scaleFactor + ancho * scaleFactor,
                 yAxis + catetoAdyacente * scaleFactor, // Esquina superior derecha
               ]}
@@ -905,7 +903,7 @@ export const DrawCanva = () => {
                 diferenciaEntreTechos
               )}cm`}
               x={xAxis}
-              y={yAxis + alto * scaleFactor + 20}
+              y={yAxis + alturaTotal * scaleFactor + 20}
             />
             <Text
               text={`${Math.ceil(alturaTotal)}cm`}
@@ -916,7 +914,7 @@ export const DrawCanva = () => {
             <Text
               text={`${Math.ceil(anchoColumna)}` + "\n" + "cm"}
               x={xAxis + (ancho - anchoColumna + 5) * scaleFactor}
-              y={yAxis + (alto - 10) * scaleFactor - 30}
+              y={yAxis + (alturaTotal - 10) * scaleFactor - 30}
             />
             <Text
               text={`${Math.ceil(pico)}cm`}
