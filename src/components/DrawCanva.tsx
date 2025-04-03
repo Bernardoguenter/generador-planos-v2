@@ -1,6 +1,9 @@
 import { Stage, Layer, Line, Text } from "react-konva";
 import {
   calcularCatetoOpuesto,
+  calcularLineasPerfiles,
+  calcularPuntosColumna,
+  calcularSecciones,
   calculoLadoTriangulo,
 } from "../utils/calculos.ts";
 import React, { useState } from "react";
@@ -248,128 +251,6 @@ export const DrawCanva = () => {
     .concat(newColumnValues || [])
     .sort((a, b) => a - b);
 
-  const calcularPuntoTecho = (columna: number) => {
-    // Coordenadas de los puntos del techo interno (límites naranja)
-    const xIzquierdoTecho = xAxis + anchoColumna * scaleFactor;
-    const yIzquierdoTecho = yAxis + catetoAdyacente * scaleFactor;
-
-    const xDerechoTecho =
-      xAxis - anchoColumna * scaleFactor + ancho * scaleFactor;
-    const yDerechoTecho = yAxis + catetoAdyacente * scaleFactor;
-
-    // Coordenadas de los puntos de la línea basePico
-    const xIzquierdoBasePico = verticeIzquierdoX;
-    const yIzquierdoBasePico = verticeIzquierdoY;
-
-    const xDerechoBasePico = verticeDerechoX;
-    const yDerechoBasePico = verticeDerechoY;
-
-    // Coordenada X de la columna
-    const xColumna = xAxis + columna * scaleFactor;
-
-    // Determinar el rango en el que está la columna
-    let xInicio, yInicio, xFin, yFin;
-
-    if (xColumna <= xIzquierdoBasePico) {
-      // Lado izquierdo (basePico izquierda)
-      xInicio = xIzquierdoBasePico;
-      yInicio = yIzquierdoBasePico;
-      xFin = xIzquierdoTecho;
-      yFin = yIzquierdoTecho;
-    } else if (xColumna >= xDerechoBasePico) {
-      // Lado derecho (basePico derecha)
-      xInicio = xDerechoBasePico;
-      yInicio = yDerechoBasePico;
-      xFin = xDerechoTecho;
-      yFin = yDerechoTecho;
-    } else if (xColumna > xIzquierdoTecho && xColumna < xDerechoTecho) {
-      // Dentro del techo interno (entre los dos techos)
-      xInicio = xIzquierdoTecho;
-      yInicio = yIzquierdoTecho;
-      xFin = xDerechoTecho;
-      yFin = yDerechoTecho;
-    } else {
-      // Si la columna no entra en ningún rango válido, devolvemos null
-      console.error("Columna fuera de rango válido:", xColumna);
-      return null;
-    }
-
-    // Calcular pendiente (m) y desplazamiento (b)
-    const m = (yFin - yInicio) / (xFin - xInicio);
-    const b = yInicio - m * xInicio;
-
-    // Calcular el punto en el techo interno
-    const yTecho = m * xColumna + b;
-
-    return { xColumna, yTecho };
-  };
-
-  const puntosColumna = (columna: number) => {
-    const techo = calcularPuntoTecho(columna);
-
-    // Coordenada X de la columna
-    const xColumna = xAxis + columna * scaleFactor;
-
-    let yBasePico, alturaColumna;
-
-    // Caso 1: Columna dentro del rango basePico
-    if (xColumna >= verticeIzquierdoX && xColumna <= verticeDerechoX) {
-      // Calculamos la altura directamente en la basePico
-      const mPico =
-        (verticeDerechoY - verticeIzquierdoY) /
-        (verticeDerechoX - verticeIzquierdoX);
-      const bPico = verticeIzquierdoY - mPico * verticeIzquierdoX;
-
-      yBasePico = mPico * xColumna + bPico;
-
-      // Altura de la columna (diferencia entre el punto superior y la base)
-      alturaColumna =
-        (yAxis + alturaTotal * scaleFactor - yBasePico) / scaleFactor;
-
-      return {
-        puntos: [
-          xColumna,
-          yBasePico, // Punto superior (basePico)
-          xColumna,
-          yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
-        ],
-        alturaColumna,
-      };
-    }
-
-    // Caso 2: Columna fuera del rango basePico (usar cálculo de techo interno)
-    if (techo) {
-      const { xColumna, yTecho } = techo;
-
-      // Altura de la columna (diferencia entre el punto superior y la base)
-      alturaColumna =
-        (yAxis + alturaTotal * scaleFactor - yTecho) / scaleFactor;
-
-      return {
-        puntos: [
-          xColumna,
-          yTecho, // Punto superior (techo interno)
-          xColumna,
-          yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
-        ],
-        alturaColumna,
-      };
-    }
-
-    // Caso 3: Columna sin techo válido (fallo en el cálculo)
-    alturaColumna = (pico - lineaPico) / scaleFactor;
-
-    return {
-      puntos: [
-        xAxis + columna * scaleFactor,
-        yAxis - (pico - lineaPico) * scaleFactor, // Punto superior (borde superior)
-        xAxis + columna * scaleFactor,
-        yAxis + alturaTotal * scaleFactor, // Punto inferior (base)
-      ],
-      alturaColumna,
-    };
-  };
-
   const calcularAltoPerfiles = (perfiles: number) => {
     const alturaDisponible = cerramiento - separacionPrimerPerfil;
     return perfiles > 0 && alturaDisponible > 0
@@ -387,88 +268,32 @@ export const DrawCanva = () => {
   );
 
   // Calcular las coordenadas de los perfiles
-  const perfilesLines = perfilesArr.map((altura) => {
-    return finalColsValues
-      .map((columna, index) => {
-        const x1 =
-          index === 0
-            ? xAxis + anchoColumna * scaleFactor
-            : xAxis + finalColsValues[index - 1] * scaleFactor;
-        const y1 = yAxis + (cerramiento - altura) * scaleFactor;
-        const x2 = xAxis + columna * scaleFactor;
-        const y2 = y1;
+  const perfilesLines = calcularLineasPerfiles(
+    perfilesArr,
+    finalColsValues,
+    xAxis,
+    yAxis,
+    anchoColumna,
+    cerramiento,
+    ancho,
+    alto,
+    altoPozo,
+    scaleFactor
+  );
 
-        const longitud =
-          Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) / scaleFactor;
-        return { x1, y1, x2, y2, longitud };
-      })
-      .filter((_, index) => index % 2 === 0)
-      .concat([
-        {
-          x1: xAxis + finalColsValues[finalColsValues.length - 1] * scaleFactor,
-          y1: yAxis + (cerramiento - altura) * scaleFactor,
-          x2: xAxis + (ancho - anchoColumna) * scaleFactor,
-          y2: yAxis + (cerramiento - altura) * scaleFactor,
-          longitud:
-            Math.sqrt(
-              Math.pow(
-                xAxis +
-                  (ancho - anchoColumna) * scaleFactor -
-                  (xAxis +
-                    finalColsValues[finalColsValues.length - 1] * scaleFactor),
-                2
-              ) +
-                Math.pow(
-                  yAxis +
-                    (alto - altoPozo - altura) * scaleFactor -
-                    (yAxis + (alto - altoPozo - altura) * scaleFactor),
-                  2
-                )
-            ) / scaleFactor,
-        },
-      ]);
-  });
-
-  const calcularSecciones = () => {
-    // Agregar los bordes izquierdo y derecho al array de columnas
-    const puntosX = [
-      xAxis,
-      ...finalColsValues.map((col) => xAxis + col * scaleFactor),
-      xAxis + ancho * scaleFactor,
-    ];
-
-    // Calcular las secciones
-    const secciones = [];
-    for (let i = 0; i < puntosX.length - 1; i++) {
-      let xInicio = puntosX[i];
-      let xFin = puntosX[i + 1];
-
-      // Ajustar la primera sección para que comience después del anchoColumna
-      if (i === 0) {
-        xInicio += anchoColumna * scaleFactor;
-      }
-
-      // Ajustar la última sección para que termine antes del anchoColumna
-      if (i === puntosX.length - 2) {
-        xFin -= anchoColumna * scaleFactor;
-      }
-
-      const yInicio = yAxis + (alturaTotal - altoPozo) * scaleFactor; // Base ajustada al altoPozo
-      const yFin = yAxis + (alto - (altoPorton ?? 0)) * scaleFactor; // Altura del portón medida desde yInicio
-
-      secciones.push({
-        xInicio,
-        xFin,
-        yInicio,
-        yFin,
-      });
-    }
-
-    return secciones.filter((_, index) => index % 2 === 0);
-  };
-
-  // Llamar a la función y mostrar las coordenadas en consola
-  const secciones = calcularSecciones();
+  //Calcular secciones para ubicar portón
+  const secciones = calcularSecciones(
+    xAxis,
+    yAxis,
+    finalColsValues,
+    scaleFactor,
+    ancho,
+    anchoColumna,
+    alto,
+    alturaTotal,
+    altoPozo,
+    altoPorton
+  );
 
   return (
     <section className="w-full h-screen md:w-3/4 flex flex-col items-center justify-start bg-white min-h-screen">
@@ -498,7 +323,22 @@ export const DrawCanva = () => {
 
                   // Calcular el punto donde termina la columna en la línea del pico
                   const columnaPorton = finalColsValues[seccionPortonIndex];
-                  const { puntos } = puntosColumna(columnaPorton);
+                  const { puntos } = calcularPuntosColumna(
+                    columnaPorton,
+                    xAxis,
+                    yAxis,
+                    ancho,
+                    anchoColumna,
+                    scaleFactor,
+                    catetoAdyacente,
+                    verticeIzquierdoX,
+                    verticeIzquierdoY,
+                    verticeDerechoX,
+                    verticeDerechoY,
+                    alturaTotal,
+                    pico,
+                    lineaPico
+                  );
                   const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
 
                   // Calcular la distancia vertical entre el techo del portón y el límite superior
@@ -652,7 +492,22 @@ export const DrawCanva = () => {
             />
             {/* Columnas */}
             {finalColsValues.map((columna: number, index: number) => {
-              const { puntos, alturaColumna } = puntosColumna(columna);
+              const { puntos, alturaColumna } = calcularPuntosColumna(
+                columna,
+                xAxis,
+                yAxis,
+                ancho,
+                anchoColumna,
+                scaleFactor,
+                catetoAdyacente,
+                verticeIzquierdoX,
+                verticeIzquierdoY,
+                verticeDerechoX,
+                verticeDerechoY,
+                alturaTotal,
+                pico,
+                lineaPico
+              );
               return (
                 <>
                   <Line
@@ -738,7 +593,7 @@ export const DrawCanva = () => {
             <Text
               text={`${Math.ceil(lineaPico)}cm`}
               x={xAxis + (ancho * scaleFactor) / 2}
-              y={yAxis - pico * scaleFactor + anchoColumna * scaleFactor + 10}
+              y={yAxis - pico * scaleFactor + anchoColumna * scaleFactor}
               fontSize={12}
             />
             {/* Alto Pozo */}
@@ -755,7 +610,7 @@ export const DrawCanva = () => {
             <Text
               text={`${Math.ceil(altoPozo)}cm`}
               rotation={90}
-              x={xAxis - scaleFactor}
+              x={xAxis}
               y={yAxis + (alturaTotal - altoPozo) * scaleFactor}
             />
             {/* Líneas perpendiculares Largo Caja (Entre estructura interana y techo interno) */}
@@ -895,7 +750,7 @@ export const DrawCanva = () => {
             <Text
               text={`${Math.ceil(altoInterno)}cm`}
               rotation={90}
-              x={xAxis + anchoColumna - 15 * scaleFactor}
+              x={xAxis + anchoColumna * scaleFactor}
               y={yAxis + (altoInterno / 2) * scaleFactor}
             />
             <Text
@@ -935,8 +790,8 @@ export const DrawCanva = () => {
             />
             <Text
               text={`${Math.ceil(largoCaja)}cm`}
-              x={verticeIzqTechoX * scaleFactor}
-              y={verticeIzqTechoY - anchoColumna * scaleFactor}
+              x={xAxis - 10 - anchoColumna * scaleFactor}
+              y={yAxis - 10 - anchoColumna * scaleFactor}
               rotation={anguloBase}
               fill={"black"}
             />
