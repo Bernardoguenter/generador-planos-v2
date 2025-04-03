@@ -18,6 +18,7 @@ import {
   xAxis,
   yAxis,
 } from "../utils/constants.ts";
+import { Secciones } from "../utils/types.ts";
 
 export const DrawCanva = () => {
   const { values, alturaTotal, note } = useValuesContext();
@@ -295,6 +296,127 @@ export const DrawCanva = () => {
     altoPorton
   );
 
+  const renderPerfilesSobrePorton = (
+    secciones: Secciones[],
+    finalColsValues: number[],
+    ubicacionPorton: number,
+    xAxis: number,
+    yAxis: number,
+    ancho: number,
+    anchoColumna: number,
+    scaleFactor: number,
+    catetoAdyacente: number,
+    verticeIzquierdoX: number,
+    verticeIzquierdoY: number,
+    verticeDerechoX: number,
+    verticeDerechoY: number,
+    alturaTotal: number,
+    pico: number,
+    lineaPico: number,
+    cantidadPerfilesSobrePorton: number | undefined
+  ) => {
+    // Calcular el índice de la sección del portón
+    const seccionPortonIndex = ubicacionPorton - 1;
+    const seccionPorton = secciones[seccionPortonIndex];
+
+    if (!seccionPorton) return null;
+
+    // Calcular el punto donde termina la columna en la línea del pico
+    const columnaPorton = finalColsValues[seccionPortonIndex];
+    const { puntos } = calcularPuntosColumna(
+      columnaPorton,
+      xAxis,
+      yAxis,
+      ancho,
+      anchoColumna,
+      scaleFactor,
+      catetoAdyacente,
+      verticeIzquierdoX,
+      verticeIzquierdoY,
+      verticeDerechoX,
+      verticeDerechoY,
+      alturaTotal,
+      pico,
+      lineaPico
+    );
+    const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
+
+    // Calcular la distancia vertical entre el techo del portón y el límite superior
+    const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
+
+    // Calcular el alto de cada perfil
+    const altoPerfil =
+      alturaDisponible / ((cantidadPerfilesSobrePorton ?? 0) + 1);
+
+    // Crear array de perfiles
+    const perfilesSobrePorton = Array.from(
+      { length: cantidadPerfilesSobrePorton ?? 0 },
+      (_, i) => seccionPorton.yFin + altoPerfil * (i + 1)
+    );
+
+    // Dibujar los perfiles sobre el portón
+    return perfilesSobrePorton.map((yPerfil, i) => (
+      <Line
+        key={`perfil-sobre-porton-${i}`}
+        points={[
+          seccionPorton.xInicio,
+          yPerfil, // Punto izquierdo del perfil
+          seccionPorton.xFin,
+          yPerfil, // Punto derecho del perfil
+        ]}
+        stroke="black"
+        strokeWidth={1}
+      />
+    ));
+  };
+
+  const renderSeccionPorton = (
+    secciones: Secciones[],
+    ubicacionPorton: number,
+    altoPorton: number = 0,
+    scaleFactor: number
+  ) => {
+    // Calcular el índice de la sección del portón
+    const seccionPortonIndex = ubicacionPorton - 1;
+    const seccionPorton = secciones[seccionPortonIndex];
+
+    if (!seccionPorton) return null;
+
+    return (
+      <>
+        {/* Dibujar la sección del portón */}
+        <Line
+          points={[
+            seccionPorton.xInicio,
+            seccionPorton.yInicio, // Punto inferior izquierdo
+            seccionPorton.xInicio,
+            seccionPorton.yFin, // Punto superior izquierdo
+            seccionPorton.xFin,
+            seccionPorton.yFin, // Punto superior derecho
+            seccionPorton.xFin,
+            seccionPorton.yInicio, // Punto inferior derecho
+            seccionPorton.xInicio,
+            seccionPorton.yInicio, // Cerrar el rectángulo
+          ]}
+          stroke="black"
+          strokeWidth={2}
+          closed={true}
+        />
+        {/* Texto con el ancho de la sección */}
+        <Text
+          text={`Portón de\n${altoPorton}cm\nx ${Math.ceil(
+            (seccionPorton.xFin - seccionPorton.xInicio) / scaleFactor
+          )}cm`}
+          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2 - 40} // Centrar horizontalmente
+          y={(seccionPorton.yInicio + seccionPorton.yFin) / 2 - 30} // Centrar verticalmente
+          fontSize={20}
+          fill="black"
+          align="center"
+        />
+      </>
+    );
+  };
+
   return (
     <section className="w-full h-screen md:w-3/4 flex flex-col items-center justify-start bg-white min-h-screen">
       <input
@@ -312,118 +434,38 @@ export const DrawCanva = () => {
           style={{ border: "1px solid black" }}
           ref={stageRef}>
           <Layer>
-            {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
-              <>
-                {(() => {
-                  // Calcular el índice de la sección del portón
-                  const seccionPortonIndex = ubicacionPorton - 1; // Restar 1 porque los índices del array empiezan en 0
-                  const seccionPorton = secciones[seccionPortonIndex];
-
-                  if (!seccionPorton) return null;
-
-                  // Calcular el punto donde termina la columna en la línea del pico
-                  const columnaPorton = finalColsValues[seccionPortonIndex];
-                  const { puntos } = calcularPuntosColumna(
-                    columnaPorton,
-                    xAxis,
-                    yAxis,
-                    ancho,
-                    anchoColumna,
-                    scaleFactor,
-                    catetoAdyacente,
-                    verticeIzquierdoX,
-                    verticeIzquierdoY,
-                    verticeDerechoX,
-                    verticeDerechoY,
-                    alturaTotal,
-                    pico,
-                    lineaPico
-                  );
-                  const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
-
-                  // Calcular la distancia vertical entre el techo del portón y el límite superior
-                  const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
-
-                  // Calcular el alto de cada perfil
-                  const altoPerfil =
-                    alturaDisponible / ((cantidadPerfilesSobrePorton ?? 0) + 1);
-
-                  // Crear array de perfiles
-                  const perfilesSobrePorton = Array.from(
-                    { length: cantidadPerfilesSobrePorton ?? 0 },
-                    (_, i) => seccionPorton.yFin + altoPerfil * (i + 1)
-                  );
-
-                  // Dibujar los perfiles sobre el portón
-                  return perfilesSobrePorton.map((yPerfil, i) => (
-                    <Line
-                      key={`perfil-sobre-porton-${i}`}
-                      points={[
-                        seccionPorton.xInicio,
-                        yPerfil, // Punto izquierdo del perfil
-                        seccionPorton.xFin,
-                        yPerfil, // Punto derecho del perfil
-                      ]}
-                      stroke="black"
-                      strokeWidth={1}
-                    />
-                  ));
-                })()}
-              </>
-            )}
+            {tienePorton &&
+              tienePerfilesSobrePorton &&
+              ubicacionPorton &&
+              renderPerfilesSobrePorton(
+                secciones,
+                finalColsValues,
+                ubicacionPorton,
+                xAxis,
+                yAxis,
+                ancho,
+                anchoColumna,
+                scaleFactor,
+                catetoAdyacente,
+                verticeIzquierdoX,
+                verticeIzquierdoY,
+                verticeDerechoX,
+                verticeDerechoY,
+                alturaTotal,
+                pico,
+                lineaPico,
+                cantidadPerfilesSobrePorton
+              )}
 
             {/* Dibujar solo la sección del portón */}
-            {tienePorton && ubicacionPorton && (
-              <>
-                {(() => {
-                  // Calcular el índice de la sección del portón
-                  const seccionPortonIndex = ubicacionPorton - 1; // Restar 1 porque los índices del array empiezan en 0
-
-                  const seccionPorton = secciones[seccionPortonIndex];
-
-                  if (!seccionPorton) return null;
-
-                  return (
-                    <>
-                      {/* Dibujar la sección del portón */}
-                      <Line
-                        points={[
-                          seccionPorton.xInicio,
-                          seccionPorton.yInicio, // Punto inferior izquierdo
-                          seccionPorton.xInicio,
-                          seccionPorton.yFin, // Punto superior izquierdo
-                          seccionPorton.xFin,
-                          seccionPorton.yFin, // Punto superior derecho
-                          seccionPorton.xFin,
-                          seccionPorton.yInicio, // Punto inferior derecho
-                          seccionPorton.xInicio,
-                          seccionPorton.yInicio, // Cerrar el rectángulo
-                        ]}
-                        stroke="black"
-                        strokeWidth={2}
-                        closed={true}
-                      />
-                      {/* Texto con el ancho de la sección */}
-                      <Text
-                        text={`Portón de\n${altoPorton}cm\nx ${Math.ceil(
-                          (seccionPorton.xFin - seccionPorton.xInicio) /
-                            scaleFactor
-                        )}cm`}
-                        x={
-                          (seccionPorton.xInicio + seccionPorton.xFin) / 2 - 40
-                        } // Centrar horizontalmente
-                        y={
-                          (seccionPorton.yInicio + seccionPorton.yFin) / 2 - 30
-                        } // Centrar verticalmente
-                        fontSize={20}
-                        fill="black"
-                        align="center"
-                      />
-                    </>
-                  );
-                })()}
-              </>
-            )}
+            {tienePorton &&
+              ubicacionPorton &&
+              renderSeccionPorton(
+                secciones,
+                ubicacionPorton,
+                altoPorton,
+                scaleFactor
+              )}
             {/* Perfiles */}
             {perfilesLines.map((lineGroup, groupIndex) =>
               lineGroup
