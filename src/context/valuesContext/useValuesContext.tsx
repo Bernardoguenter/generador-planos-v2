@@ -22,6 +22,8 @@ const initialValues = {
   altoPorton: 0,
   tienePerfilesSobrePorton: false,
   cantidadPerfilesSobrePorton: 0,
+  tienePerfilesSobreTecho: false,
+  cantidadPerfilesSobreTecho: 0,
 };
 
 export function ValuesProvider({ children }: { children: ReactNode }) {

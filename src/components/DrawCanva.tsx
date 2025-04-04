@@ -42,6 +42,8 @@ export const DrawCanva = () => {
     ubicacionPorton,
     cantidadPerfilesSobrePorton,
     tienePerfilesSobrePorton,
+    tienePerfilesSobreTecho,
+    cantidadPerfilesSobreTecho,
   } = values;
 
   const { draw, stageRef } = useDrawContext();
@@ -339,6 +341,7 @@ export const DrawCanva = () => {
       pico,
       lineaPico
     );
+
     const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
 
     // Calcular la distancia vertical entre el techo del portón y el límite superior
@@ -356,17 +359,28 @@ export const DrawCanva = () => {
 
     // Dibujar los perfiles sobre el portón
     return perfilesSobrePorton.map((yPerfil, i) => (
-      <Line
-        key={`perfil-sobre-porton-${i}`}
-        points={[
-          seccionPorton.xInicio,
-          yPerfil, // Punto izquierdo del perfil
-          seccionPorton.xFin,
-          yPerfil, // Punto derecho del perfil
-        ]}
-        stroke="black"
-        strokeWidth={1}
-      />
+      <>
+        <Line
+          key={`perfil-sobre-porton-${i}`}
+          points={[
+            seccionPorton.xInicio,
+            yPerfil, // Punto izquierdo del perfil
+            seccionPorton.xFin,
+            yPerfil, // Punto derecho del perfil
+          ]}
+          stroke="black"
+          strokeWidth={1}
+        />
+        <Text
+          rotation={90}
+          text={`${Math.abs(altoPerfil)}`}
+          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2}
+          y={seccionPorton.yFin + altoPerfil * scaleFactor}
+          fontSize={12}
+          fill="black"
+          align="center"
+        />
+      </>
     ));
   };
 
@@ -399,20 +413,93 @@ export const DrawCanva = () => {
             seccionPorton.yInicio, // Cerrar el rectángulo
           ]}
           stroke="black"
-          strokeWidth={2}
+          strokeWidth={1}
           closed={true}
         />
         {/* Texto con el ancho de la sección */}
         <Text
-          text={`Portón de\n${altoPorton}cm\nx ${Math.ceil(
+          text={`Portón de\n${altoPorton}\nx ${Math.ceil(
             (seccionPorton.xFin - seccionPorton.xInicio) / scaleFactor
-          )}cm`}
-          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2 - 40} // Centrar horizontalmente
-          y={(seccionPorton.yInicio + seccionPorton.yFin) / 2 - 30} // Centrar verticalmente
+          )}`}
+          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2 - 40}
+          y={(seccionPorton.yInicio + seccionPorton.yFin) / 2 - 30}
           fontSize={20}
           fill="black"
           align="center"
         />
+      </>
+    );
+  };
+
+  const renderPerfilesSobreTecho = (
+    cantidadPerfilesSobreTecho: number,
+    xAxis: number,
+    yAxis: number,
+    ancho: number,
+    scaleFactor: number,
+    lineaPico: number
+  ) => {
+    if (!cantidadPerfilesSobreTecho || cantidadPerfilesSobreTecho <= 0)
+      return null;
+
+    const alturaDisponible = pico - lineaPico;
+    const altoPerfil = alturaDisponible / (cantidadPerfilesSobreTecho + 1);
+
+    const baseTrianguloX = xAxis + (ancho * scaleFactor) / 2;
+    const baseTrianguloY = yAxis - (pico - anchoColumna) * scaleFactor;
+
+    const anguloTriangulo = pendienteTecho * (Math.PI / 180);
+
+    return (
+      <>
+        {Array.from({ length: cantidadPerfilesSobreTecho }).map((_, index) => {
+          const alturaTriangulo =
+            (lineaPico - anchoColumna + altoPerfil * (index + 1)) * scaleFactor;
+          const baseAdyacente = alturaTriangulo / Math.tan(anguloTriangulo);
+
+          const verticeDerechoX = baseTrianguloX + baseAdyacente;
+          const verticeDerechoY = baseTrianguloY + alturaTriangulo;
+
+          const verticeIzquierdoX = baseTrianguloX - baseAdyacente;
+          const verticeIzquierdoY = verticeDerechoY;
+
+          const largoLinea = Math.sqrt(
+            Math.pow(verticeDerechoX - verticeIzquierdoX, 2) +
+              Math.pow(verticeDerechoY - verticeIzquierdoY, 2)
+          );
+
+          return (
+            <React.Fragment key={`perfil-sobre-techo-${index}`}>
+              <Line
+                points={[
+                  verticeIzquierdoX,
+                  verticeIzquierdoY,
+                  verticeDerechoX,
+                  verticeDerechoY,
+                ]}
+                stroke="black"
+                strokeWidth={1}
+              />
+              <Text
+                rotation={90}
+                text={`${Math.ceil(altoPerfil)}`}
+                x={baseTrianguloX}
+                y={verticeIzquierdoY}
+                fontSize={12}
+                fill="black"
+                align="center"
+              />
+              <Text
+                text={`${Math.ceil(largoLinea)}`}
+                x={(verticeIzquierdoX + verticeDerechoX) / 2}
+                y={(verticeIzquierdoY + verticeDerechoY) / 2 - 10}
+                fontSize={12}
+                fill="black"
+                align="center"
+              />
+            </React.Fragment>
+          );
+        })}
       </>
     );
   };
@@ -434,6 +521,15 @@ export const DrawCanva = () => {
           style={{ border: "1px solid black" }}
           ref={stageRef}>
           <Layer>
+            {tienePerfilesSobreTecho &&
+              renderPerfilesSobreTecho(
+                cantidadPerfilesSobreTecho ?? 1,
+                xAxis,
+                yAxis,
+                ancho,
+                scaleFactor,
+                lineaPico
+              )}
             {tienePorton &&
               tienePerfilesSobrePorton &&
               ubicacionPorton &&
@@ -494,13 +590,23 @@ export const DrawCanva = () => {
                       strokeWidth={1}
                     />
                     {groupIndex === 0 && (
-                      <Text
-                        text={`${Math.ceil(line.longitud)}cm`}
-                        x={(line.x1 + line.x2) / 2 - 20}
-                        y={line.y1 - 10}
-                        fontSize={12}
-                        fill="black"
-                      />
+                      <>
+                        <Text
+                          text={`${Math.ceil(line.longitud)}`}
+                          x={(line.x1 + line.x2) / 2 - 20}
+                          y={line.y1 - 10}
+                          fontSize={12}
+                          fill="black"
+                        />
+                        <Text
+                          text={`${Math.ceil(altoPerfil)}`}
+                          rotation={90}
+                          x={(line.x1 + line.x2) / 2}
+                          y={(altoPerfil + line.y1) / 2}
+                          fontSize={12}
+                          fill="black"
+                        />
+                      </>
                     )}
                   </React.Fragment>
                 ))
@@ -526,7 +632,7 @@ export const DrawCanva = () => {
             ))}
             {/* Distancia entre fijaCorreas */}
             <Text
-              text={`${Math.ceil(fijaCorreasDist)}cm`}
+              text={`${Math.ceil(fijaCorreasDist)}`}
               x={verticeDerTechoX - fijaCorreasDist / 2}
               y={verticeDerTechoY - anchoColumna * 2 * scaleFactor}
               rotation={pendienteTecho}
@@ -562,7 +668,7 @@ export const DrawCanva = () => {
                   {index % 2 === 0 ? (
                     <Text
                       key={`col-text-even-${index}`}
-                      text={`${Math.ceil(alturaColumna)}cm`}
+                      text={`${Math.ceil(alturaColumna)}`}
                       rotation={90}
                       x={xAxis + columna * scaleFactor}
                       y={yAxis + (altoInterno / 2) * scaleFactor}
@@ -572,7 +678,7 @@ export const DrawCanva = () => {
                   ) : (
                     <Text
                       key={`col-text-odd-${index}`}
-                      text={`${Math.ceil(alturaColumna)}cm`}
+                      text={`${Math.ceil(alturaColumna)}`}
                       rotation={90}
                       x={xAxis + columna * scaleFactor + 10}
                       y={yAxis + (altoInterno / 2) * scaleFactor}
@@ -597,7 +703,7 @@ export const DrawCanva = () => {
               closed={true}
             />
             <Text
-              text={`${Math.ceil((2 * baseAdyacente1) / scaleFactor)}cm`}
+              text={`${Math.ceil((2 * baseAdyacente1) / scaleFactor)}`}
               x={baseTrianguloX - 35}
               y={baseTrianguloY + separacionLineas * scaleFactor + 10}
               fontSize={12}
@@ -615,7 +721,7 @@ export const DrawCanva = () => {
               strokeWidth={1}
             />
             <Text
-              text={`${Math.ceil((2 * baseAdyacente) / scaleFactor)}cm`}
+              text={`${Math.ceil((2 * baseAdyacente) / scaleFactor)}`}
               x={baseTrianguloX - 35}
               y={baseTrianguloY + separacionLineas * scaleFactor + 35}
               fontSize={12}
@@ -633,7 +739,7 @@ export const DrawCanva = () => {
               strokeWidth={1}
             />
             <Text
-              text={`${Math.ceil(lineaPico)}cm`}
+              text={`${Math.ceil(lineaPico)}`}
               x={xAxis + (ancho * scaleFactor) / 2}
               y={yAxis - pico * scaleFactor + anchoColumna * scaleFactor}
               fontSize={12}
@@ -650,7 +756,7 @@ export const DrawCanva = () => {
               stroke={"black"}
             />
             <Text
-              text={`${Math.ceil(altoPozo)}cm`}
+              text={`${Math.ceil(altoPozo)}`}
               rotation={90}
               x={xAxis}
               y={yAxis + (alturaTotal - altoPozo) * scaleFactor}
@@ -749,7 +855,7 @@ export const DrawCanva = () => {
               stroke={"black"}
             />
             <Text
-              text={`Cerramiento: ${Math.ceil(cerramiento)}cm`}
+              text={`Cerramiento: ${Math.ceil(cerramiento)}`}
               rotation={90}
               x={xAxis + (ancho + 70) * scaleFactor}
               y={yAxis + (alto - cerramiento) * scaleFactor}
@@ -790,7 +896,7 @@ export const DrawCanva = () => {
               fontStyle="bold"
             />
             <Text
-              text={`${Math.ceil(altoInterno)}cm`}
+              text={`${Math.ceil(altoInterno)}`}
               rotation={90}
               x={xAxis + anchoColumna * scaleFactor}
               y={yAxis + (altoInterno / 2) * scaleFactor}
@@ -798,47 +904,47 @@ export const DrawCanva = () => {
             <Text
               text={`Diferencia entre largo de techos:${Math.floor(
                 diferenciaEntreTechos
-              )}cm`}
+              )}`}
               x={xAxis}
               y={yAxis + alturaTotal * scaleFactor + 20}
             />
             <Text
-              text={`${Math.ceil(alturaTotal)}cm`}
+              text={`${Math.ceil(alturaTotal)}`}
               rotation={90}
               x={xAxis - (anchoColumna / 10) * scaleFactor}
               y={yAxis + (altoInterno / 2) * scaleFactor}
             />
             <Text
-              text={`${Math.ceil(anchoColumna)}` + "\n" + "cm"}
+              text={`${Math.ceil(anchoColumna)}`}
               x={xAxis + (ancho - anchoColumna + 5) * scaleFactor}
               y={yAxis + (alturaTotal - 10) * scaleFactor - 30}
             />
             <Text
-              text={`${Math.ceil(pico)}cm`}
+              text={`${Math.ceil(pico)}`}
               x={xAxis + (ancho * scaleFactor) / 2 - 40}
               y={yAxis - pico * scaleFactor - 10}
             />
             <Text
-              text={`${Math.ceil(ladoTecho)}cm`}
+              text={`${Math.ceil(ladoTecho)}`}
               x={puntoMedioIzqX}
               y={puntoMedioIzqY - anchoColumna * scaleFactor}
               rotation={-pendienteTecho}
             />
             <Text
-              text={`${Math.ceil(ladoTechoInterno)}cm`}
+              text={`${Math.ceil(ladoTechoInterno)}`}
               x={puntoMedioIzqX}
               y={puntoMedioIzqY + anchoColumna * scaleFactor - 15}
               rotation={-pendienteTecho}
             />
             <Text
-              text={`${Math.ceil(largoCaja)}cm`}
+              text={`${Math.ceil(largoCaja)}`}
               x={xAxis - 10 - anchoColumna * scaleFactor}
               y={yAxis - 10 - anchoColumna * scaleFactor}
               rotation={anguloBase}
               fill={"black"}
             />
             <Text
-              text={`${Math.ceil(largoTotalLineaPerpendicular)}cm`}
+              text={`${Math.ceil(largoTotalLineaPerpendicular)}`}
               rotation={-anguloMedioTecho}
               x={puntoFinPerpendicularIzqX - 10}
               y={puntoFinPerpendicularIzqY + 30}

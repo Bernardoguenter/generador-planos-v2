@@ -101,6 +101,14 @@ export const valuesSchema = z.object({
     })
     .nonnegative("El valor debe ser mayor a 0")
     .optional(),
+  tienePerfilesSobreTecho: z.boolean(),
+  cantidadPerfilesSobreTecho: z.coerce
+    .number({
+      invalid_type_error:
+        "La cantidad de perfiles sobre techo debe ser un número",
+    })
+    .nonnegative("El valor debe ser mayor a 0")
+    .optional(),
 });
 
 export type ValuesInterface = z.infer<typeof valuesSchema>;

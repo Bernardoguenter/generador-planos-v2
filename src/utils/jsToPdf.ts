@@ -4,7 +4,7 @@ import { RefObject } from "react";
 
 export function convertPDF(
   stageRef: RefObject<Konva.Stage | null>,
-  alto: number,
+  largo: number,
   ancho: number
 ) {
   // Generar la imagen del canvas de Konva como PNG
@@ -24,5 +24,5 @@ export function convertPDF(
   }
 
   // Guardar el PDF
-  pdf.save(`Plano galpón ${alto}x${ancho}.pdf`);
+  pdf.save(`Plano galpón ${ancho / 100}mts x ${largo / 100}mts.pdf`);
 }

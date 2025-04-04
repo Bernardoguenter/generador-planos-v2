@@ -34,6 +34,10 @@ export const Form = () => {
     "tienePerfilesSobrePorton",
     values.tienePerfilesSobrePorton
   );
+  const tienePerfilesSobreTecho = watch(
+    "tienePerfilesSobreTecho",
+    values.tienePerfilesSobreTecho
+  );
 
   useEffect(() => {
     let newColumnValues = [...(columnValues || [])];
@@ -55,6 +59,10 @@ export const Form = () => {
   useEffect(() => {
     setValue("tienePerfilesSobrePorton", tienePerfilesSobrePorton);
   }, [tienePerfilesSobrePorton, setValue]);
+
+  useEffect(() => {
+    setValue("tienePerfilesSobreTecho", tienePerfilesSobreTecho);
+  }, [tienePerfilesSobreTecho, setValue]);
 
   const onSubmit: SubmitHandler<ValuesInterface> = (data) => {
     setValues(data);
@@ -191,6 +199,21 @@ export const Form = () => {
           </div>
         ))}
       <CheckboxField
+        name="tienePerfilesSobreTecho"
+        label="Tiene perfiles sobre el techo?"
+        control={control}
+        error={errors.tienePerfilesSobreTecho}
+      />
+      {tienePerfilesSobreTecho && (
+        <InputField
+          name="cantidadPerfilesSobreTecho"
+          control={control}
+          label="Cantidad perfiles sobre Techo"
+          type="number"
+          error={errors.cantidadPerfilesSobreTecho}
+        />
+      )}
+      <CheckboxField
         name="esFrente"
         label="Es Frente?"
         control={control}
@@ -250,6 +273,7 @@ export const Form = () => {
           error={errors.cantidadPerfilesSobrePorton}
         />
       )}
+
       <div className="flex items-start justify-start w-full flex-col ">
         <label htmlFor="note">Agregar Nota (opcional)</label>
         <textarea
@@ -264,7 +288,7 @@ export const Form = () => {
         Generar Plano
       </button>
       <button
-        onClick={() => convertPDF(stageRef, values.alto, values.ancho)}
+        onClick={() => convertPDF(stageRef, values.largo, values.ancho)}
         disabled={!draw}
         className="w-full  max-w-full m-auto text-center p-2 rounded text-white font-medium disabled:cursor-not-allowed disabled:bg-red-200 bg-red-800 hover:bg-red-700 cursor-pointer">
         Exportar plano a PDF
