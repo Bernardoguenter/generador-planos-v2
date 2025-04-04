@@ -1,49 +1,59 @@
-import { Stage, Layer, Line, Text } from "react-konva";
+import { Stage, Layer } from "react-konva";
 import {
   calcularCatetoOpuesto,
-  calcularLineasPerfiles,
-  calcularPuntosColumna,
   calcularSecciones,
   calculoLadoTriangulo,
 } from "../utils/calculos.ts";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useValuesContext } from "../context/valuesContext/index.tsx";
 import { useDrawContext } from "../context/drawContext/index.tsx";
 import {
   altoFijaCorrea,
   fijaCorreaFinal,
   fijaCorreaInicial,
-  separacionPrimerPerfil,
   separaciónColumnasInternas,
   xAxis,
   yAxis,
 } from "../utils/constants.ts";
-import { Secciones } from "../utils/types.ts";
+import {
+  AltoPozo,
+  BaseLineaPico,
+  Cerramiento,
+  Columnas,
+  DiferenciasText,
+  EstructuraExterna,
+  EstructuraInterna,
+  FijaCorreas,
+  LineaPico,
+  LineasLargoCaja,
+  LineasLargoCajaPerpendiculares,
+  Note,
+  PerfilSobrePorton,
+  PerfilSobreTecho,
+  Perfiles,
+  Porton,
+  TechoExterno,
+  Titulo,
+} from "./componentesPlanos";
 
 export const DrawCanva = () => {
-  const { values, alturaTotal, note } = useValuesContext();
+  const { values, alturaTotal } = useValuesContext();
   const {
     alto,
     altoPozo,
     ancho,
     anchoColumna,
-    cerramiento,
     fijaCorreas,
-    largo,
     largoCaja,
     lineaPico,
-    perfiles,
     pico,
     separacionLineas,
     columnValues,
-    esFrente,
     tienePorton,
     altoPorton,
     ubicacionPorton,
-    cantidadPerfilesSobrePorton,
     tienePerfilesSobrePorton,
     tienePerfilesSobreTecho,
-    cantidadPerfilesSobreTecho,
   } = values;
 
   const { draw, stageRef } = useDrawContext();
@@ -254,36 +264,6 @@ export const DrawCanva = () => {
     .concat(newColumnValues || [])
     .sort((a, b) => a - b);
 
-  const calcularAltoPerfiles = (perfiles: number) => {
-    const alturaDisponible = cerramiento - separacionPrimerPerfil;
-    return perfiles > 0 && alturaDisponible > 0
-      ? alturaDisponible / perfiles
-      : 0;
-  };
-
-  // Calcular el alto de cada perfil
-  const altoPerfil = calcularAltoPerfiles(perfiles);
-
-  // Crear array de perfiles
-  const perfilesArr = Array.from(
-    { length: perfiles },
-    (_, i) => separacionPrimerPerfil + i * altoPerfil
-  );
-
-  // Calcular las coordenadas de los perfiles
-  const perfilesLines = calcularLineasPerfiles(
-    perfilesArr,
-    finalColsValues,
-    xAxis,
-    yAxis,
-    anchoColumna,
-    cerramiento,
-    ancho,
-    alto,
-    altoPozo,
-    scaleFactor
-  );
-
   //Calcular secciones para ubicar portón
   const secciones = calcularSecciones(
     xAxis,
@@ -297,212 +277,6 @@ export const DrawCanva = () => {
     altoPozo,
     altoPorton
   );
-
-  const renderPerfilesSobrePorton = (
-    secciones: Secciones[],
-    finalColsValues: number[],
-    ubicacionPorton: number,
-    xAxis: number,
-    yAxis: number,
-    ancho: number,
-    anchoColumna: number,
-    scaleFactor: number,
-    catetoAdyacente: number,
-    verticeIzquierdoX: number,
-    verticeIzquierdoY: number,
-    verticeDerechoX: number,
-    verticeDerechoY: number,
-    alturaTotal: number,
-    pico: number,
-    lineaPico: number,
-    cantidadPerfilesSobrePorton: number | undefined
-  ) => {
-    // Calcular el índice de la sección del portón
-    const seccionPortonIndex = ubicacionPorton - 1;
-    const seccionPorton = secciones[seccionPortonIndex];
-
-    if (!seccionPorton) return null;
-
-    // Calcular el punto donde termina la columna en la línea del pico
-    const columnaPorton = finalColsValues[seccionPortonIndex];
-    const { puntos } = calcularPuntosColumna(
-      columnaPorton,
-      xAxis,
-      yAxis,
-      ancho,
-      anchoColumna,
-      scaleFactor,
-      catetoAdyacente,
-      verticeIzquierdoX,
-      verticeIzquierdoY,
-      verticeDerechoX,
-      verticeDerechoY,
-      alturaTotal,
-      pico,
-      lineaPico
-    );
-
-    const limiteSuperiorY = puntos[1]; // Coordenada Y del punto superior de la columna
-
-    // Calcular la distancia vertical entre el techo del portón y el límite superior
-    const alturaDisponible = limiteSuperiorY - seccionPorton.yFin;
-
-    // Calcular el alto de cada perfil
-    const altoPerfil =
-      alturaDisponible / ((cantidadPerfilesSobrePorton ?? 0) + 1);
-
-    // Crear array de perfiles
-    const perfilesSobrePorton = Array.from(
-      { length: cantidadPerfilesSobrePorton ?? 0 },
-      (_, i) => seccionPorton.yFin + altoPerfil * (i + 1)
-    );
-
-    // Dibujar los perfiles sobre el portón
-    return perfilesSobrePorton.map((yPerfil, i) => (
-      <>
-        <Line
-          key={`perfil-sobre-porton-${i}`}
-          points={[
-            seccionPorton.xInicio,
-            yPerfil, // Punto izquierdo del perfil
-            seccionPorton.xFin,
-            yPerfil, // Punto derecho del perfil
-          ]}
-          stroke="black"
-          strokeWidth={1}
-        />
-        <Text
-          rotation={90}
-          text={`${Math.abs(altoPerfil)}`}
-          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2}
-          y={seccionPorton.yFin + altoPerfil * scaleFactor}
-          fontSize={12}
-          fill="black"
-          align="center"
-        />
-      </>
-    ));
-  };
-
-  const renderSeccionPorton = (
-    secciones: Secciones[],
-    ubicacionPorton: number,
-    altoPorton: number = 0,
-    scaleFactor: number
-  ) => {
-    // Calcular el índice de la sección del portón
-    const seccionPortonIndex = ubicacionPorton - 1;
-    const seccionPorton = secciones[seccionPortonIndex];
-
-    if (!seccionPorton) return null;
-
-    return (
-      <>
-        {/* Dibujar la sección del portón */}
-        <Line
-          points={[
-            seccionPorton.xInicio,
-            seccionPorton.yInicio, // Punto inferior izquierdo
-            seccionPorton.xInicio,
-            seccionPorton.yFin, // Punto superior izquierdo
-            seccionPorton.xFin,
-            seccionPorton.yFin, // Punto superior derecho
-            seccionPorton.xFin,
-            seccionPorton.yInicio, // Punto inferior derecho
-            seccionPorton.xInicio,
-            seccionPorton.yInicio, // Cerrar el rectángulo
-          ]}
-          stroke="black"
-          strokeWidth={1}
-          closed={true}
-        />
-        {/* Texto con el ancho de la sección */}
-        <Text
-          text={`Portón de\n${altoPorton}\nx ${Math.ceil(
-            (seccionPorton.xFin - seccionPorton.xInicio) / scaleFactor
-          )}`}
-          x={(seccionPorton.xInicio + seccionPorton.xFin) / 2 - 40}
-          y={(seccionPorton.yInicio + seccionPorton.yFin) / 2 - 30}
-          fontSize={20}
-          fill="black"
-          align="center"
-        />
-      </>
-    );
-  };
-
-  const renderPerfilesSobreTecho = (
-    cantidadPerfilesSobreTecho: number,
-    xAxis: number,
-    yAxis: number,
-    ancho: number,
-    scaleFactor: number,
-    lineaPico: number
-  ) => {
-    if (!cantidadPerfilesSobreTecho || cantidadPerfilesSobreTecho <= 0)
-      return null;
-
-    const alturaDisponible = pico - lineaPico;
-    const altoPerfil = alturaDisponible / (cantidadPerfilesSobreTecho + 1);
-
-    const baseTrianguloX = xAxis + (ancho * scaleFactor) / 2;
-    const baseTrianguloY = yAxis - (pico - anchoColumna) * scaleFactor;
-
-    const anguloTriangulo = pendienteTecho * (Math.PI / 180);
-
-    return (
-      <>
-        {Array.from({ length: cantidadPerfilesSobreTecho }).map((_, index) => {
-          const alturaTriangulo =
-            (lineaPico - anchoColumna + altoPerfil * (index + 1)) * scaleFactor;
-          const baseAdyacente = alturaTriangulo / Math.tan(anguloTriangulo);
-
-          const verticeDerechoX = baseTrianguloX + baseAdyacente;
-          const verticeDerechoY = baseTrianguloY + alturaTriangulo;
-
-          const verticeIzquierdoX = baseTrianguloX - baseAdyacente;
-          const verticeIzquierdoY = verticeDerechoY;
-
-          const largoLinea = Math.sqrt(
-            Math.pow(verticeDerechoX - verticeIzquierdoX, 2) +
-              Math.pow(verticeDerechoY - verticeIzquierdoY, 2)
-          );
-
-          return (
-            <React.Fragment key={`perfil-sobre-techo-${index}`}>
-              <Line
-                points={[
-                  verticeIzquierdoX,
-                  verticeIzquierdoY,
-                  verticeDerechoX,
-                  verticeDerechoY,
-                ]}
-                stroke="black"
-                strokeWidth={1}
-              />
-              <Text
-                rotation={90}
-                text={`${Math.ceil(altoPerfil)}`}
-                x={baseTrianguloX}
-                y={verticeIzquierdoY}
-                fontSize={12}
-                fill="black"
-                align="center"
-              />
-              <Text
-                text={`${Math.ceil(largoLinea)}`}
-                x={(verticeIzquierdoX + verticeDerechoX) / 2}
-                y={(verticeIzquierdoY + verticeDerechoY) / 2 - 10}
-                fontSize={12}
-                fill="black"
-                align="center"
-              />
-            </React.Fragment>
-          );
-        })}
-      </>
-    );
-  };
 
   return (
     <section className="w-full h-screen md:w-3/4 flex flex-col items-center justify-start bg-white min-h-screen">
@@ -521,434 +295,135 @@ export const DrawCanva = () => {
           style={{ border: "1px solid black" }}
           ref={stageRef}>
           <Layer>
-            {tienePerfilesSobreTecho &&
-              renderPerfilesSobreTecho(
-                cantidadPerfilesSobreTecho ?? 1,
-                xAxis,
-                yAxis,
-                ancho,
-                scaleFactor,
-                lineaPico
-              )}
-            {tienePorton &&
-              tienePerfilesSobrePorton &&
-              ubicacionPorton &&
-              renderPerfilesSobrePorton(
-                secciones,
-                finalColsValues,
-                ubicacionPorton,
-                xAxis,
-                yAxis,
-                ancho,
-                anchoColumna,
-                scaleFactor,
-                catetoAdyacente,
-                verticeIzquierdoX,
-                verticeIzquierdoY,
-                verticeDerechoX,
-                verticeDerechoY,
-                alturaTotal,
-                pico,
-                lineaPico,
-                cantidadPerfilesSobrePorton
-              )}
-
-            {/* Dibujar solo la sección del portón */}
-            {tienePorton &&
-              ubicacionPorton &&
-              renderSeccionPorton(
-                secciones,
-                ubicacionPorton,
-                altoPorton,
-                scaleFactor
-              )}
-            {/* Perfiles */}
-            {perfilesLines.map((lineGroup, groupIndex) =>
-              lineGroup
-                .filter((line) => {
-                  // Verificar si el portón está definido
-                  if (tienePorton && ubicacionPorton) {
-                    const seccionPortonIndex = ubicacionPorton - 1; // Índice de la sección del portón
-                    const seccionPorton = secciones[seccionPortonIndex];
-
-                    // Si las coordenadas del perfil están dentro de la sección del portón, excluirlo
-                    if (
-                      seccionPorton &&
-                      line.x1 >= seccionPorton.xInicio &&
-                      line.x2 <= seccionPorton.xFin
-                    ) {
-                      return false; // Excluir este perfil
-                    }
-                  }
-                  return true; // Incluir el perfil
-                })
-                .map((line, index) => (
-                  <React.Fragment key={`perfil-${groupIndex}-${index}`}>
-                    <Line
-                      points={[line.x1, line.y1, line.x2, line.y2]}
-                      stroke="black"
-                      strokeWidth={1}
-                    />
-                    {groupIndex === 0 && (
-                      <>
-                        <Text
-                          text={`${Math.ceil(line.longitud)}`}
-                          x={(line.x1 + line.x2) / 2 - 20}
-                          y={line.y1 - 10}
-                          fontSize={12}
-                          fill="black"
-                        />
-                        <Text
-                          text={`${Math.ceil(altoPerfil)}`}
-                          rotation={90}
-                          x={(line.x1 + line.x2) / 2}
-                          y={(altoPerfil + line.y1) / 2}
-                          fontSize={12}
-                          fill="black"
-                        />
-                      </>
-                    )}
-                  </React.Fragment>
-                ))
-            )}
-            {/* FijaCorreas */}
-            {fijaCorreasLines.map((line, index) => (
-              <>
-                <Line
-                  key={`fijaCorrea-${index}`}
-                  points={[line.x1, line.y1, line.x2, line.y2]}
-                  stroke="black"
-                  strokeWidth={1}
-                />
-                <Text
-                  key={`col-text-even-${index}`}
-                  text={`${Math.ceil(fijaCorreasArr[index])}`}
-                  x={line.x1 - 15}
-                  y={line.y1 - 20}
-                  fontSize={12}
-                  fill="black"
-                />
-              </>
-            ))}
-            {/* Distancia entre fijaCorreas */}
-            <Text
-              text={`${Math.ceil(fijaCorreasDist)}`}
-              x={verticeDerTechoX - fijaCorreasDist / 2}
-              y={verticeDerTechoY - anchoColumna * 2 * scaleFactor}
-              rotation={pendienteTecho}
-              fill={"black"}
-            />
-            {/* Columnas */}
-            {finalColsValues.map((columna: number, index: number) => {
-              const { puntos, alturaColumna } = calcularPuntosColumna(
-                columna,
-                xAxis,
-                yAxis,
-                ancho,
-                anchoColumna,
-                scaleFactor,
-                catetoAdyacente,
-                verticeIzquierdoX,
-                verticeIzquierdoY,
-                verticeDerechoX,
-                verticeDerechoY,
-                alturaTotal,
-                pico,
-                lineaPico
-              );
-              return (
-                <>
-                  <Line
-                    key={`line-${index}`}
-                    points={puntos}
-                    stroke="black"
-                    strokeWidth={1}
-                  />
-
-                  {index % 2 === 0 ? (
-                    <Text
-                      key={`col-text-even-${index}`}
-                      text={`${Math.ceil(alturaColumna)}`}
-                      rotation={90}
-                      x={xAxis + columna * scaleFactor}
-                      y={yAxis + (altoInterno / 2) * scaleFactor}
-                      fontSize={12}
-                      fill="black"
-                    />
-                  ) : (
-                    <Text
-                      key={`col-text-odd-${index}`}
-                      text={`${Math.ceil(alturaColumna)}`}
-                      rotation={90}
-                      x={xAxis + columna * scaleFactor + 10}
-                      y={yAxis + (altoInterno / 2) * scaleFactor}
-                      fontSize={12}
-                      fill="black"
-                    />
-                  )}
-                </>
-              );
-            })}
-
-            {/* Base Línea Pico Inferior */}
-            <Line
-              points={[
-                verticeIzquierdoX,
-                verticeIzquierdoY, // Vértice izquierdo
-                verticeDerechoX,
-                verticeDerechoY, // Vértice derecho
-              ]}
-              stroke="black"
-              strokeWidth={1}
-              closed={true}
-            />
-            <Text
-              text={`${Math.ceil((2 * baseAdyacente1) / scaleFactor)}`}
-              x={baseTrianguloX - 35}
-              y={baseTrianguloY + separacionLineas * scaleFactor + 10}
-              fontSize={12}
-              fill="black"
-            />
-            {/* Base Línea Pico Superior*/}
-            <Line
-              points={[
-                verticeIzquierdoX1,
-                verticeIzquierdoY1, // Vértice izquierdo
-                verticeDerechoX1,
-                verticeDerechoY1, // Vértice derecho
-              ]}
-              stroke="black"
-              strokeWidth={1}
-            />
-            <Text
-              text={`${Math.ceil((2 * baseAdyacente) / scaleFactor)}`}
-              x={baseTrianguloX - 35}
-              y={baseTrianguloY + separacionLineas * scaleFactor + 35}
-              fontSize={12}
-              fill="black"
-            />
-            {/* Línea Pico */}
-            <Line
-              points={[
-                xAxis + (ancho * scaleFactor) / 2,
-                yAxis - pico * scaleFactor, // Pico interno central
-                xAxis + (ancho * scaleFactor) / 2,
-                yAxis - (pico - lineaPico) * scaleFactor, // Pico interno central
-              ]}
-              stroke="black"
-              strokeWidth={1}
-            />
-            <Text
-              text={`${Math.ceil(lineaPico)}`}
-              x={xAxis + (ancho * scaleFactor) / 2}
-              y={yAxis - pico * scaleFactor + anchoColumna * scaleFactor}
-              fontSize={12}
-            />
-            {/* Alto Pozo */}
-            <Line
-              points={[
-                xAxis,
-                yAxis + (alturaTotal - altoPozo) * scaleFactor, // Esquina inferior izquierda
-                xAxis + ancho * scaleFactor,
-                yAxis + (alturaTotal - altoPozo) * scaleFactor, // Esquina inferior derecha
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            <Text
-              text={`${Math.ceil(altoPozo)}`}
-              rotation={90}
-              x={xAxis}
-              y={yAxis + (alturaTotal - altoPozo) * scaleFactor}
-            />
-            {/* Líneas perpendiculares Largo Caja (Entre estructura interana y techo interno) */}
-            <Line
-              points={[
-                limiteInternoIzqX,
-                interseccionIzqY,
-                puntoFinPerpendicularIzqX,
-                puntoFinPerpendicularIzqY,
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            <Line
-              points={[
-                limiteInternoDerX,
-                interseccionDerY,
-                puntoFinPerpendicularDerX,
-                puntoFinPerpendicularDerY,
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            {/* Líneas Largo Caja */}
-            <Line
-              points={[
-                verticeIzqTechoX,
-                verticeIzqTechoY, // Vértice izquierdo del techo
-                verticeIzqTechoX + desplazamiento_x * scaleFactor,
-                verticeIzqTechoY + desplazamiento_y * scaleFactor, // Punto final para la línea izquierda
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            <Line
-              points={[
-                verticeDerTechoX,
-                verticeDerTechoY, // Vértice derecho del techo
-                verticeDerTechoX - desplazamiento_x * scaleFactor,
-                verticeDerTechoY + desplazamiento_y * scaleFactor, // Punto final para la línea derecha
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            {/* Techo externo */}
-            <Line
-              points={[
-                xAxis,
-                yAxis, // Punto izquierdo del techo
-                xAxis + (ancho * scaleFactor) / 2,
-                yAxis - pico * scaleFactor, // Pico central
-                xAxis + ancho * scaleFactor,
-                yAxis, // Punto derecho del techo
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            <Line
-              points={[
-                xAxis + anchoColumna * scaleFactor,
-                yAxis + catetoAdyacente * scaleFactor, // Punto izquierdo interno
-                xAxis + (ancho * scaleFactor) / 2,
-                yAxis - (pico - anchoColumna) * scaleFactor, // Pico interno central
-                xAxis + (ancho - anchoColumna) * scaleFactor,
-                yAxis + catetoAdyacente * scaleFactor, // Punto derecho interno
-              ]}
-              stroke="black"
-              strokeWidth={1}
-            />
-            {/* Estructura Externa*/}
-            <Line
-              points={[
-                xAxis,
-                yAxis, // Esquina superior izquierda
-                xAxis,
-                yAxis + alturaTotal * scaleFactor, // Esquina inferior izquierda
-                xAxis + ancho * scaleFactor,
-                yAxis + alturaTotal * scaleFactor, // Esquina inferior derecha
-                xAxis + ancho * scaleFactor,
-                yAxis, // Esquina superior derecha
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            {/* Cerramiento */}
-            <Line
-              points={[
-                xAxis + (ancho + 40) * scaleFactor,
-                yAxis,
-                xAxis + (ancho + 40) * scaleFactor,
-                yAxis + cerramiento * scaleFactor,
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            <Text
-              text={`Cerramiento: ${Math.ceil(cerramiento)}`}
-              rotation={90}
-              x={xAxis + (ancho + 70) * scaleFactor}
-              y={yAxis + (alto - cerramiento) * scaleFactor}
-            />
-            {/* Estructura interna */}
-            <Line
-              points={[
-                xAxis + anchoColumna * scaleFactor,
-                yAxis + catetoAdyacente * scaleFactor, // Esquina superior izquierda
-                xAxis + anchoColumna * scaleFactor,
-                yAxis + alturaTotal * scaleFactor, // Esquina inferior izquierda
-                xAxis - anchoColumna * scaleFactor + ancho * scaleFactor,
-                yAxis + alturaTotal * scaleFactor, // Esquina inferior derecha
-                xAxis - anchoColumna * scaleFactor + ancho * scaleFactor,
-                yAxis + catetoAdyacente * scaleFactor, // Esquina superior derecha
-              ]}
-              strokeWidth={1}
-              stroke={"black"}
-            />
-            {/* Textos */}
-            {note && (
-              <Text
-                text={note}
-                x={innerWidth / 5}
-                y={25 + scaleFactor}
-                fontSize={12}
+            <Note scaleFactor={scaleFactor} />
+            <Titulo scaleFactor={scaleFactor} />
+            {tienePerfilesSobreTecho && (
+              <PerfilSobreTecho
+                scaleFactor={scaleFactor}
+                pendienteTecho={pendienteTecho}
               />
             )}
-            <Text
-              text={`Galpón de ${ancho / 100}mts de ancho x ${
-                largo / 100
-              }mts de largo x ${alto / 100}mts de alto  - ${
-                esFrente ? "Frente" : "Fondo"
-              }`}
-              x={0 + innerWidth / 5}
-              y={5 + scaleFactor}
-              fontSize={16}
-              fontStyle="bold"
+            {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
+              <PerfilSobrePorton
+                catetoAdyacente={catetoAdyacente}
+                finalColsValues={finalColsValues}
+                scaleFactor={scaleFactor}
+                secciones={secciones}
+                verticeDerechoX={verticeDerechoX}
+                verticeDerechoY={verticeDerechoY}
+                verticeIzquierdoX={verticeIzquierdoX}
+                verticeIzquierdoY={verticeIzquierdoY}
+              />
+            )}
+            {/* Porton */}
+            {tienePorton && ubicacionPorton && (
+              <Porton
+                secciones={secciones}
+                ubicacionPorton={ubicacionPorton}
+                altoPorton={altoPorton}
+                scaleFactor={scaleFactor}
+              />
+            )}
+            {/* Perfiles */}
+            <Perfiles
+              secciones={secciones}
+              scaleFactor={scaleFactor}
+              finalColsValues={finalColsValues}
             />
-            <Text
-              text={`${Math.ceil(altoInterno)}`}
-              rotation={90}
-              x={xAxis + anchoColumna * scaleFactor}
-              y={yAxis + (altoInterno / 2) * scaleFactor}
+            {/* FijaCorreas */}
+            <FijaCorreas
+              fijaCorreasLines={fijaCorreasLines}
+              fijaCorreasArr={fijaCorreasArr}
+              fijaCorreasDist={fijaCorreasDist}
+              verticeDerTechoX={verticeDerTechoX}
+              verticeDerTechoY={verticeDerTechoY}
+              pendienteTecho={pendienteTecho}
+              scaleFactor={scaleFactor}
             />
-            <Text
-              text={`Diferencia entre largo de techos:${Math.floor(
-                diferenciaEntreTechos
-              )}`}
-              x={xAxis}
-              y={yAxis + alturaTotal * scaleFactor + 20}
+            {/* Columnas */}
+            <Columnas
+              finalColsValues={finalColsValues}
+              scaleFactor={scaleFactor}
+              catetoAdyacente={catetoAdyacente}
+              verticeIzquierdoX={verticeIzquierdoX}
+              verticeIzquierdoY={verticeIzquierdoY}
+              verticeDerechoX={verticeDerechoX}
+              verticeDerechoY={verticeDerechoY}
+              altoInterno={altoInterno}
             />
-            <Text
-              text={`${Math.ceil(alturaTotal)}`}
-              rotation={90}
-              x={xAxis - (anchoColumna / 10) * scaleFactor}
-              y={yAxis + (altoInterno / 2) * scaleFactor}
+            {/* Base Línea Pico */}
+            <BaseLineaPico
+              verticeIzquierdoX={verticeIzquierdoX}
+              verticeIzquierdoY={verticeIzquierdoY}
+              verticeDerechoX={verticeDerechoX}
+              verticeDerechoY={verticeDerechoY}
+              baseAdyacente1={baseAdyacente1}
+              scaleFactor={scaleFactor}
+              baseTrianguloX={baseTrianguloX}
+              verticeIzquierdoX1={verticeIzquierdoX1}
+              verticeIzquierdoY1={verticeIzquierdoY1}
+              verticeDerechoX1={verticeDerechoX1}
+              verticeDerechoY1={verticeDerechoY1}
+              baseAdyacente={baseAdyacente}
+              baseTrianguloY={baseTrianguloY}
+              separacionLineas={separacionLineas}
             />
-            <Text
-              text={`${Math.ceil(anchoColumna)}`}
-              x={xAxis + (ancho - anchoColumna + 5) * scaleFactor}
-              y={yAxis + (alturaTotal - 10) * scaleFactor - 30}
+            {/* Línea Pico */}
+            <LineaPico scaleFactor={scaleFactor} />
+            {/* Alto Pozo */}
+            <AltoPozo scaleFactor={scaleFactor} />
+            {/* Líneas perpendiculares Largo Caja (Entre estructura interana y techo interno) */}
+            <LineasLargoCajaPerpendiculares
+              limiteInternoIzqX={limiteInternoIzqX}
+              interseccionIzqY={interseccionIzqY}
+              puntoFinPerpendicularIzqX={puntoFinPerpendicularIzqX}
+              puntoFinPerpendicularIzqY={puntoFinPerpendicularIzqY}
+              limiteInternoDerX={limiteInternoDerX}
+              interseccionDerY={interseccionDerY}
+              puntoFinPerpendicularDerX={puntoFinPerpendicularDerX}
+              puntoFinPerpendicularDerY={puntoFinPerpendicularDerY}
+              largoTotalLineaPerpendicular={largoTotalLineaPerpendicular}
+              anguloMedioTecho={anguloMedioTecho}
             />
-            <Text
-              text={`${Math.ceil(pico)}`}
-              x={xAxis + (ancho * scaleFactor) / 2 - 40}
-              y={yAxis - pico * scaleFactor - 10}
+            {/* Líneas Largo Caja */}
+            <LineasLargoCaja
+              verticeIzqTechoX={verticeIzqTechoX}
+              verticeIzqTechoY={verticeIzqTechoY}
+              desplazamiento_x={desplazamiento_x}
+              desplazamiento_y={desplazamiento_y}
+              scaleFactor={scaleFactor}
+              verticeDerTechoX={verticeDerTechoX}
+              verticeDerTechoY={verticeDerTechoY}
+              anguloBase={anguloBase}
             />
-            <Text
-              text={`${Math.ceil(ladoTecho)}`}
-              x={puntoMedioIzqX}
-              y={puntoMedioIzqY - anchoColumna * scaleFactor}
-              rotation={-pendienteTecho}
+            {/* Techo externo */}
+            <TechoExterno
+              catetoAdyacente={catetoAdyacente}
+              scaleFactor={scaleFactor}
             />
-            <Text
-              text={`${Math.ceil(ladoTechoInterno)}`}
-              x={puntoMedioIzqX}
-              y={puntoMedioIzqY + anchoColumna * scaleFactor - 15}
-              rotation={-pendienteTecho}
+            {/* Cerramiento */}
+            <Cerramiento scaleFactor={scaleFactor} />
+            {/* Estructura Externa*/}
+            <EstructuraExterna
+              scaleFactor={scaleFactor}
+              altoInterno={altoInterno}
+              pendienteTecho={pendienteTecho}
+              puntoMedioIzqX={puntoMedioIzqX}
+              puntoMedioIzqY={puntoMedioIzqY}
             />
-            <Text
-              text={`${Math.ceil(largoCaja)}`}
-              x={xAxis - 10 - anchoColumna * scaleFactor}
-              y={yAxis - 10 - anchoColumna * scaleFactor}
-              rotation={anguloBase}
-              fill={"black"}
+            {/* Estructura interna */}
+            <EstructuraInterna
+              scaleFactor={scaleFactor}
+              catetoAdyacente={catetoAdyacente}
+              altoInterno={altoInterno}
+              ladoTechoInterno={ladoTechoInterno}
+              pendienteTecho={pendienteTecho}
+              puntoMedioIzqX={puntoMedioIzqX}
+              puntoMedioIzqY={puntoMedioIzqY}
             />
-            <Text
-              text={`${Math.ceil(largoTotalLineaPerpendicular)}`}
-              rotation={-anguloMedioTecho}
-              x={puntoFinPerpendicularIzqX - 10}
-              y={puntoFinPerpendicularIzqY + 30}
-              fill={"black"}
+            <DiferenciasText
+              scaleFactor={scaleFactor}
+              diferenciaEntreTechos={diferenciaEntreTechos}
             />
           </Layer>
         </Stage>
