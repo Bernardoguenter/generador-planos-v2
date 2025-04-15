@@ -312,38 +312,21 @@ export const DrawCanva = () => {
               verticeIzquierdoX !== -Infinity &&
               pico > 0 &&
               lineaPico > 0 && (
-                <>
-                  <BaseLineaPico
-                    verticeIzquierdoX={verticeIzquierdoX}
-                    verticeIzquierdoY={verticeIzquierdoY}
-                    verticeDerechoX={verticeDerechoX}
-                    verticeDerechoY={verticeDerechoY}
-                    baseAdyacente1={baseAdyacente1}
-                    baseTrianguloX={baseTrianguloX}
-                    verticeIzquierdoX1={verticeIzquierdoX1}
-                    verticeIzquierdoY1={verticeIzquierdoY1}
-                    verticeDerechoX1={verticeDerechoX1}
-                    verticeDerechoY1={verticeDerechoY1}
-                    baseAdyacente={baseAdyacente}
-                    baseTrianguloY={baseTrianguloY}
-                    separacionLineas={separacionLineas}
-                  />
-                  <BaseLineaPico
-                    verticeIzquierdoX={verticeIzquierdoX}
-                    verticeIzquierdoY={verticeIzquierdoY}
-                    verticeDerechoX={verticeDerechoX}
-                    verticeDerechoY={verticeDerechoY}
-                    baseAdyacente1={baseAdyacente1}
-                    baseTrianguloX={baseTrianguloX}
-                    verticeIzquierdoX1={verticeIzquierdoX1}
-                    verticeIzquierdoY1={verticeIzquierdoY1}
-                    verticeDerechoX1={verticeDerechoX1}
-                    verticeDerechoY1={verticeDerechoY1}
-                    baseAdyacente={baseAdyacente}
-                    baseTrianguloY={baseTrianguloY}
-                    separacionLineas={separacionLineas}
-                  />
-                </>
+                <BaseLineaPico
+                  verticeIzquierdoX={verticeIzquierdoX}
+                  verticeIzquierdoY={verticeIzquierdoY}
+                  verticeDerechoX={verticeDerechoX}
+                  verticeDerechoY={verticeDerechoY}
+                  baseAdyacente1={baseAdyacente1}
+                  baseTrianguloX={baseTrianguloX}
+                  verticeIzquierdoX1={verticeIzquierdoX1}
+                  verticeIzquierdoY1={verticeIzquierdoY1}
+                  verticeDerechoX1={verticeDerechoX1}
+                  verticeDerechoY1={verticeDerechoY1}
+                  baseAdyacente={baseAdyacente}
+                  baseTrianguloY={baseTrianguloY}
+                  separacionLineas={separacionLineas}
+                />
               )}
 
             {/* Línea Pico */}

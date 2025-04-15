@@ -33,23 +33,6 @@ export const BaseLineaPico = ({
   separacionLineas,
 }: Props) => {
   const { scaleFactor } = useDrawContext();
-
-  console.log({
-    verticeIzquierdoX,
-    verticeIzquierdoY,
-    verticeDerechoX,
-    verticeDerechoY,
-    baseAdyacente1,
-    baseTrianguloX,
-    verticeIzquierdoX1,
-    verticeIzquierdoY1,
-    verticeDerechoX1,
-    verticeDerechoY1,
-    baseAdyacente,
-    baseTrianguloY,
-    separacionLineas,
-  });
-
   const baseLineaPicoInferior = (2 * baseAdyacente1) / scaleFactor;
   const baseLineaPicoSuperior = (2 * baseAdyacente) / scaleFactor;
 
