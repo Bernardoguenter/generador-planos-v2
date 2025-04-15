@@ -1,4 +1,5 @@
 import { Line, Text } from "react-konva";
+import { useDrawContext } from "../../context/drawContext";
 
 interface Props {
   verticeIzquierdoX: number;
@@ -6,7 +7,6 @@ interface Props {
   verticeDerechoX: number;
   verticeDerechoY: number;
   baseAdyacente1: number;
-  scaleFactor: number;
   baseTrianguloX: number;
   verticeIzquierdoX1: number;
   verticeIzquierdoY1: number;
@@ -23,7 +23,6 @@ export const BaseLineaPico = ({
   verticeDerechoX,
   verticeDerechoY,
   baseAdyacente1,
-  scaleFactor,
   baseTrianguloX,
   verticeIzquierdoX1,
   verticeIzquierdoY1,
@@ -33,6 +32,27 @@ export const BaseLineaPico = ({
   baseTrianguloY,
   separacionLineas,
 }: Props) => {
+  const { scaleFactor } = useDrawContext();
+
+  console.log({
+    verticeIzquierdoX,
+    verticeIzquierdoY,
+    verticeDerechoX,
+    verticeDerechoY,
+    baseAdyacente1,
+    baseTrianguloX,
+    verticeIzquierdoX1,
+    verticeIzquierdoY1,
+    verticeDerechoX1,
+    verticeDerechoY1,
+    baseAdyacente,
+    baseTrianguloY,
+    separacionLineas,
+  });
+
+  const baseLineaPicoInferior = (2 * baseAdyacente1) / scaleFactor;
+  const baseLineaPicoSuperior = (2 * baseAdyacente) / scaleFactor;
+
   return (
     <>
       {/* Base Línea Pico Inferior */}
@@ -45,14 +65,14 @@ export const BaseLineaPico = ({
         ]}
         stroke="black"
         strokeWidth={1}
-        closed={true}
       />
       <Text
-        text={`${Math.ceil((2 * baseAdyacente1) / scaleFactor)}`}
+        text={`${Math.ceil(baseLineaPicoInferior)}`}
         x={baseTrianguloX - 35}
         y={baseTrianguloY + separacionLineas * scaleFactor + 10}
         fontSize={12}
         fill="black"
+        draggable
       />
       {/* Base Línea Pico Superior*/}
       <Line
@@ -65,12 +85,14 @@ export const BaseLineaPico = ({
         stroke="black"
         strokeWidth={1}
       />
+
       <Text
-        text={`${Math.ceil((2 * baseAdyacente) / scaleFactor)}`}
+        text={`${Math.ceil(baseLineaPicoSuperior)}`}
         x={baseTrianguloX - 35}
         y={baseTrianguloY + separacionLineas * scaleFactor + 35}
         fontSize={12}
         fill="black"
+        draggable
       />
     </>
   );

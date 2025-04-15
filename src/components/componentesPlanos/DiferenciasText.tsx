@@ -1,17 +1,16 @@
 import { Text } from "react-konva";
 import { xAxis, yAxis } from "../../utils/constants";
 import { useValuesContext } from "../../context/valuesContext";
+import { useDrawContext } from "../../context/drawContext";
 
 interface Props {
-  scaleFactor: number;
   diferenciaEntreTechos: number;
 }
 
-export const DiferenciasText = ({
-  scaleFactor,
-  diferenciaEntreTechos,
-}: Props) => {
+export const DiferenciasText = ({ diferenciaEntreTechos }: Props) => {
   const { alturaTotal } = useValuesContext();
+  const { scaleFactor } = useDrawContext();
+
   return (
     <Text
       text={`Diferencia entre largo de techos:${Math.floor(
@@ -19,6 +18,7 @@ export const DiferenciasText = ({
       )}`}
       x={xAxis}
       y={yAxis + alturaTotal * scaleFactor + 20}
+      draggable
     />
   );
 };

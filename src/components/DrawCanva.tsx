@@ -4,13 +4,9 @@ import {
   calcularSecciones,
   calculoLadoTriangulo,
 } from "../utils/calculos.ts";
-import { useState } from "react";
 import { useValuesContext } from "../context/valuesContext/index.tsx";
 import { useDrawContext } from "../context/drawContext/index.tsx";
 import {
-  altoFijaCorrea,
-  fijaCorreaFinal,
-  fijaCorreaInicial,
   separaciónColumnasInternas,
   xAxis,
   yAxis,
@@ -32,7 +28,6 @@ import {
   PerfilSobreTecho,
   Perfiles,
   Porton,
-  TechoExterno,
   Titulo,
 } from "./componentesPlanos";
 
@@ -43,7 +38,6 @@ export const DrawCanva = () => {
     altoPozo,
     ancho,
     anchoColumna,
-    fijaCorreas,
     largoCaja,
     lineaPico,
     pico,
@@ -56,8 +50,7 @@ export const DrawCanva = () => {
     tienePerfilesSobreTecho,
   } = values;
 
-  const { draw, stageRef } = useDrawContext();
-  const [scaleFactor, setScaleFactor] = useState(0.4);
+  const { draw, stageRef, scaleFactor, setScaleFactor } = useDrawContext();
 
   // Calcular la longitud de los lados del triángulo del techo
   const halfBase = ancho / 2;
@@ -73,31 +66,6 @@ export const DrawCanva = () => {
 
   // Calcular los grados de pendiente del techo interno y externo
   const pendienteTecho = Math.atan2(pico, halfBase) * (180 / Math.PI);
-
-  // Calcular distancia entre las fijaCorreas
-  const fijaCorreasDist =
-    (ladoTecho - fijaCorreaFinal - fijaCorreaInicial) / (fijaCorreas - 1);
-
-  // Crear array de fijaCorreas
-  const fijaCorreasArr = Array.from({ length: fijaCorreas }, (_, i) =>
-    i === 0 ? fijaCorreaInicial : fijaCorreaInicial + i * fijaCorreasDist
-  );
-
-  // Calcular las coordenadas de las líneas de fijaCorreas
-  const fijaCorreasLines = fijaCorreasArr.map((distancia) => {
-    const x =
-      verticeDerTechoX -
-      distancia * Math.cos(pendienteTecho * (Math.PI / 180)) * scaleFactor;
-    const y =
-      verticeDerTechoY -
-      distancia * Math.sin(pendienteTecho * (Math.PI / 180)) * scaleFactor;
-    return {
-      x1: x,
-      y1: y,
-      x2: x,
-      y2: y - altoFijaCorrea * scaleFactor,
-    };
-  });
 
   //Calcular el ángulo formado por la pendiente del techo techo y el largo de la caja
   const anguloTecho = 90 + pendienteTecho;
@@ -183,12 +151,6 @@ export const DrawCanva = () => {
   // Calcular el alto interno entre los puntos de la esquina superior e inferior izquierda
   const altoInterno = Math.abs(alturaTotal - catetoAdyacente);
 
-  // Calcular la longitud entre el Punto izquierdo interno y el Pico interno central
-  const ladoTechoInterno = Math.sqrt(
-    Math.pow(xAxis + ancho / 2 - (xAxis + anchoColumna), 2) +
-      Math.pow(yAxis - (pico - anchoColumna) - (yAxis + catetoAdyacente), 2)
-  );
-
   //Calcular la diferencia de largo entre los dos techos
   const diferenciaLargoCaja = largoCaja - diferencia;
   const angulo = 90 - anguloMedioTecho; // Ángulo en grados
@@ -259,7 +221,6 @@ export const DrawCanva = () => {
     });
 
   //Obtener todos los valores de las líneas de columnas
-
   const finalColsValues = (columnValues || [])
     .concat(newColumnValues || [])
     .sort((a, b) => a - b);
@@ -295,19 +256,15 @@ export const DrawCanva = () => {
           style={{ border: "1px solid black" }}
           ref={stageRef}>
           <Layer>
-            <Note scaleFactor={scaleFactor} />
-            <Titulo scaleFactor={scaleFactor} />
+            <Note />
+            <Titulo />
             {tienePerfilesSobreTecho && (
-              <PerfilSobreTecho
-                scaleFactor={scaleFactor}
-                pendienteTecho={pendienteTecho}
-              />
+              <PerfilSobreTecho pendienteTecho={pendienteTecho} />
             )}
             {tienePorton && tienePerfilesSobrePorton && ubicacionPorton && (
               <PerfilSobrePorton
                 catetoAdyacente={catetoAdyacente}
                 finalColsValues={finalColsValues}
-                scaleFactor={scaleFactor}
                 secciones={secciones}
                 verticeDerechoX={verticeDerechoX}
                 verticeDerechoY={verticeDerechoY}
@@ -321,91 +278,110 @@ export const DrawCanva = () => {
                 secciones={secciones}
                 ubicacionPorton={ubicacionPorton}
                 altoPorton={altoPorton}
-                scaleFactor={scaleFactor}
               />
             )}
             {/* Perfiles */}
             <Perfiles
               secciones={secciones}
-              scaleFactor={scaleFactor}
               finalColsValues={finalColsValues}
             />
             {/* FijaCorreas */}
             <FijaCorreas
-              fijaCorreasLines={fijaCorreasLines}
-              fijaCorreasArr={fijaCorreasArr}
-              fijaCorreasDist={fijaCorreasDist}
+              ladoTecho={ladoTecho}
               verticeDerTechoX={verticeDerTechoX}
               verticeDerTechoY={verticeDerTechoY}
               pendienteTecho={pendienteTecho}
-              scaleFactor={scaleFactor}
             />
             {/* Columnas */}
-            <Columnas
-              finalColsValues={finalColsValues}
-              scaleFactor={scaleFactor}
-              catetoAdyacente={catetoAdyacente}
-              verticeIzquierdoX={verticeIzquierdoX}
-              verticeIzquierdoY={verticeIzquierdoY}
-              verticeDerechoX={verticeDerechoX}
-              verticeDerechoY={verticeDerechoY}
-              altoInterno={altoInterno}
-            />
+            {alto > 0 && ancho > 0 && (
+              <Columnas
+                finalColsValues={finalColsValues}
+                catetoAdyacente={catetoAdyacente}
+                verticeIzquierdoX={verticeIzquierdoX}
+                verticeIzquierdoY={verticeIzquierdoY}
+                verticeDerechoX={verticeDerechoX}
+                verticeDerechoY={verticeDerechoY}
+                altoInterno={altoInterno}
+              />
+            )}
+
             {/* Base Línea Pico */}
-            <BaseLineaPico
-              verticeIzquierdoX={verticeIzquierdoX}
-              verticeIzquierdoY={verticeIzquierdoY}
-              verticeDerechoX={verticeDerechoX}
-              verticeDerechoY={verticeDerechoY}
-              baseAdyacente1={baseAdyacente1}
-              scaleFactor={scaleFactor}
-              baseTrianguloX={baseTrianguloX}
-              verticeIzquierdoX1={verticeIzquierdoX1}
-              verticeIzquierdoY1={verticeIzquierdoY1}
-              verticeDerechoX1={verticeDerechoX1}
-              verticeDerechoY1={verticeDerechoY1}
-              baseAdyacente={baseAdyacente}
-              baseTrianguloY={baseTrianguloY}
-              separacionLineas={separacionLineas}
-            />
+
+            {baseAdyacente !== -Infinity &&
+              verticeDerTechoX !== -Infinity &&
+              verticeIzquierdoX !== -Infinity &&
+              pico > 0 &&
+              lineaPico > 0 && (
+                <>
+                  <BaseLineaPico
+                    verticeIzquierdoX={verticeIzquierdoX}
+                    verticeIzquierdoY={verticeIzquierdoY}
+                    verticeDerechoX={verticeDerechoX}
+                    verticeDerechoY={verticeDerechoY}
+                    baseAdyacente1={baseAdyacente1}
+                    baseTrianguloX={baseTrianguloX}
+                    verticeIzquierdoX1={verticeIzquierdoX1}
+                    verticeIzquierdoY1={verticeIzquierdoY1}
+                    verticeDerechoX1={verticeDerechoX1}
+                    verticeDerechoY1={verticeDerechoY1}
+                    baseAdyacente={baseAdyacente}
+                    baseTrianguloY={baseTrianguloY}
+                    separacionLineas={separacionLineas}
+                  />
+                  <BaseLineaPico
+                    verticeIzquierdoX={verticeIzquierdoX}
+                    verticeIzquierdoY={verticeIzquierdoY}
+                    verticeDerechoX={verticeDerechoX}
+                    verticeDerechoY={verticeDerechoY}
+                    baseAdyacente1={baseAdyacente1}
+                    baseTrianguloX={baseTrianguloX}
+                    verticeIzquierdoX1={verticeIzquierdoX1}
+                    verticeIzquierdoY1={verticeIzquierdoY1}
+                    verticeDerechoX1={verticeDerechoX1}
+                    verticeDerechoY1={verticeDerechoY1}
+                    baseAdyacente={baseAdyacente}
+                    baseTrianguloY={baseTrianguloY}
+                    separacionLineas={separacionLineas}
+                  />
+                </>
+              )}
+
             {/* Línea Pico */}
-            <LineaPico scaleFactor={scaleFactor} />
+            <LineaPico />
             {/* Alto Pozo */}
-            <AltoPozo scaleFactor={scaleFactor} />
+            <AltoPozo />
             {/* Líneas perpendiculares Largo Caja (Entre estructura interana y techo interno) */}
-            <LineasLargoCajaPerpendiculares
-              limiteInternoIzqX={limiteInternoIzqX}
-              interseccionIzqY={interseccionIzqY}
-              puntoFinPerpendicularIzqX={puntoFinPerpendicularIzqX}
-              puntoFinPerpendicularIzqY={puntoFinPerpendicularIzqY}
-              limiteInternoDerX={limiteInternoDerX}
-              interseccionDerY={interseccionDerY}
-              puntoFinPerpendicularDerX={puntoFinPerpendicularDerX}
-              puntoFinPerpendicularDerY={puntoFinPerpendicularDerY}
-              largoTotalLineaPerpendicular={largoTotalLineaPerpendicular}
-              anguloMedioTecho={anguloMedioTecho}
-            />
+            {ancho > 0 && alto > 0 && (
+              <LineasLargoCajaPerpendiculares
+                limiteInternoIzqX={limiteInternoIzqX}
+                interseccionIzqY={interseccionIzqY}
+                puntoFinPerpendicularIzqX={puntoFinPerpendicularIzqX}
+                puntoFinPerpendicularIzqY={puntoFinPerpendicularIzqY}
+                limiteInternoDerX={limiteInternoDerX}
+                interseccionDerY={interseccionDerY}
+                puntoFinPerpendicularDerX={puntoFinPerpendicularDerX}
+                puntoFinPerpendicularDerY={puntoFinPerpendicularDerY}
+                largoTotalLineaPerpendicular={largoTotalLineaPerpendicular}
+                anguloMedioTecho={anguloMedioTecho}
+              />
+            )}
+
             {/* Líneas Largo Caja */}
-            <LineasLargoCaja
-              verticeIzqTechoX={verticeIzqTechoX}
-              verticeIzqTechoY={verticeIzqTechoY}
-              desplazamiento_x={desplazamiento_x}
-              desplazamiento_y={desplazamiento_y}
-              scaleFactor={scaleFactor}
-              verticeDerTechoX={verticeDerTechoX}
-              verticeDerTechoY={verticeDerTechoY}
-              anguloBase={anguloBase}
-            />
-            {/* Techo externo */}
-            <TechoExterno
-              catetoAdyacente={catetoAdyacente}
-              scaleFactor={scaleFactor}
-            />
+            {ancho > 0 && alto > 0 && (
+              <LineasLargoCaja
+                verticeIzqTechoX={verticeIzqTechoX}
+                verticeIzqTechoY={verticeIzqTechoY}
+                desplazamiento_x={desplazamiento_x}
+                desplazamiento_y={desplazamiento_y}
+                verticeDerTechoX={verticeDerTechoX}
+                verticeDerTechoY={verticeDerTechoY}
+                anguloBase={anguloBase}
+              />
+            )}
             {/* Cerramiento */}
-            <Cerramiento scaleFactor={scaleFactor} />
+            <Cerramiento />
             {/* Estructura Externa*/}
             <EstructuraExterna
-              scaleFactor={scaleFactor}
               altoInterno={altoInterno}
               pendienteTecho={pendienteTecho}
               puntoMedioIzqX={puntoMedioIzqX}
@@ -413,18 +389,15 @@ export const DrawCanva = () => {
             />
             {/* Estructura interna */}
             <EstructuraInterna
-              scaleFactor={scaleFactor}
               catetoAdyacente={catetoAdyacente}
               altoInterno={altoInterno}
-              ladoTechoInterno={ladoTechoInterno}
               pendienteTecho={pendienteTecho}
               puntoMedioIzqX={puntoMedioIzqX}
               puntoMedioIzqY={puntoMedioIzqY}
             />
-            <DiferenciasText
-              scaleFactor={scaleFactor}
-              diferenciaEntreTechos={diferenciaEntreTechos}
-            />
+            {largoCaja > 0 && alto > 0 && ancho > 0 && (
+              <DiferenciasText diferenciaEntreTechos={diferenciaEntreTechos} />
+            )}
           </Layer>
         </Stage>
       )}

@@ -3,11 +3,11 @@ import { calcularPuntosColumna } from "../../utils/calculos";
 import { Secciones } from "../../utils/types";
 import { useValuesContext } from "../../context/valuesContext";
 import { xAxis, yAxis } from "../../utils/constants";
+import { useDrawContext } from "../../context/drawContext";
 
 interface Props {
   secciones: Secciones[];
   finalColsValues: number[];
-  scaleFactor: number;
   catetoAdyacente: number;
   verticeIzquierdoX: number;
   verticeIzquierdoY: number;
@@ -18,7 +18,6 @@ interface Props {
 export const PerfilSobrePorton = ({
   secciones,
   finalColsValues,
-  scaleFactor,
   catetoAdyacente,
   verticeIzquierdoX,
   verticeIzquierdoY,
@@ -34,6 +33,7 @@ export const PerfilSobrePorton = ({
     lineaPico,
     cantidadPerfilesSobrePorton,
   } = values;
+  const { scaleFactor } = useDrawContext();
 
   // Calcular el índice de la sección del portón
   const seccionPortonIndex = (ubicacionPorton ?? 1) - 1;
@@ -97,6 +97,7 @@ export const PerfilSobrePorton = ({
         fontSize={12}
         fill="black"
         align="center"
+        draggable
       />
     </>
   ));

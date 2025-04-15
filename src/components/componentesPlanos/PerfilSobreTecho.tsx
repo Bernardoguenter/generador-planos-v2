@@ -2,16 +2,17 @@ import React from "react";
 import { useValuesContext } from "../../context/valuesContext";
 import { xAxis, yAxis } from "../../utils/constants";
 import { Line, Text } from "react-konva";
+import { useDrawContext } from "../../context/drawContext";
 
 interface Props {
-  scaleFactor: number;
   pendienteTecho: number;
 }
 
-export const PerfilSobreTecho = ({ scaleFactor, pendienteTecho }: Props) => {
+export const PerfilSobreTecho = ({ pendienteTecho }: Props) => {
   const { values } = useValuesContext();
   const { cantidadPerfilesSobreTecho, pico, ancho, anchoColumna, lineaPico } =
     values;
+  const { scaleFactor } = useDrawContext();
 
   if (!cantidadPerfilesSobreTecho || cantidadPerfilesSobreTecho <= 0)
     return null;
@@ -62,6 +63,7 @@ export const PerfilSobreTecho = ({ scaleFactor, pendienteTecho }: Props) => {
               fontSize={12}
               fill="black"
               align="center"
+              draggable
             />
             <Text
               text={`${Math.ceil(largoLinea)}`}
@@ -70,6 +72,7 @@ export const PerfilSobreTecho = ({ scaleFactor, pendienteTecho }: Props) => {
               fontSize={12}
               fill="black"
               align="center"
+              draggable
             />
           </React.Fragment>
         );

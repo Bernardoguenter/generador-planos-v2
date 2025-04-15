@@ -5,6 +5,8 @@ interface drawContextInterface {
   draw: boolean;
   stageRef: RefObject<Konva.Stage | null>;
   setDraw: React.Dispatch<React.SetStateAction<boolean>>;
+  scaleFactor: number;
+  setScaleFactor: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export const DrawContext = createContext<drawContextInterface | null>(null);

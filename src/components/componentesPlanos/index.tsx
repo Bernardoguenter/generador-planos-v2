@@ -14,5 +14,4 @@ export { Perfiles } from "./Perfiles";
 export { PerfilSobrePorton } from "./PerfilSobrePorton";
 export { PerfilSobreTecho } from "./PerfilSobreTecho";
 export { Porton } from "./Porton";
-export { TechoExterno } from "./TechoExterno";
 export { Titulo } from "./Titulo";

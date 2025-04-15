@@ -4,6 +4,7 @@ import { useValuesContext } from "../../context/valuesContext";
 import { Secciones } from "../../utils/types";
 import { separacionPrimerPerfil, xAxis, yAxis } from "../../utils/constants";
 import { calcularLineasPerfiles } from "../../utils/calculos";
+import { useDrawContext } from "../../context/drawContext";
 
 interface LineGroup {
   x1: number;
@@ -15,15 +16,10 @@ interface LineGroup {
 
 interface Props {
   finalColsValues: number[];
-  scaleFactor: number;
   secciones: Secciones[];
 }
 
-export const Perfiles = ({
-  finalColsValues,
-  scaleFactor,
-  secciones,
-}: Props) => {
+export const Perfiles = ({ finalColsValues, secciones }: Props) => {
   const { values } = useValuesContext();
   const {
     tienePorton,
@@ -35,6 +31,7 @@ export const Perfiles = ({
     altoPozo,
     anchoColumna,
   } = values;
+  const { scaleFactor } = useDrawContext();
 
   const calcularAltoPerfiles = (perfiles: number) => {
     const alturaDisponible = cerramiento - separacionPrimerPerfil;
@@ -68,53 +65,60 @@ export const Perfiles = ({
 
   return (
     <>
-      {perfilesLines.map((lineGroup: LineGroup[], groupIndex: number) =>
-        lineGroup
-          .filter((line) => {
-            // Verificar si el portón está definido
-            if (tienePorton && ubicacionPorton) {
-              const seccionPortonIndex = ubicacionPorton - 1; // Índice de la sección del portón
-              const seccionPorton = secciones[seccionPortonIndex];
+      {perfiles > 0 && finalColsValues.length > 0 && (
+        <>
+          {perfilesArr.length > 0 &&
+            perfilesLines.map((lineGroup: LineGroup[], groupIndex: number) =>
+              lineGroup
+                .filter((line) => {
+                  // Verificar si el portón está definido
+                  if (tienePorton && ubicacionPorton) {
+                    const seccionPortonIndex = ubicacionPorton - 1; // Índice de la sección del portón
+                    const seccionPorton = secciones[seccionPortonIndex];
 
-              // Si las coordenadas del perfil están dentro de la sección del portón, excluirlo
-              if (
-                seccionPorton &&
-                line.x1 >= seccionPorton.xInicio &&
-                line.x2 <= seccionPorton.xFin
-              ) {
-                return false; // Excluir este perfil
-              }
-            }
-            return true; // Incluir el perfil
-          })
-          .map((line, index) => (
-            <React.Fragment key={`perfil-${groupIndex}-${index}`}>
-              <Line
-                points={[line.x1, line.y1, line.x2, line.y2]}
-                stroke="black"
-                strokeWidth={1}
-              />
-              {groupIndex === 0 && (
-                <>
-                  <Text
-                    text={`${Math.ceil(line.longitud)}`}
-                    x={(line.x1 + line.x2) / 2 - 20}
-                    y={line.y1 - 10}
-                    fontSize={12}
-                    fill="black"
-                  />
-                  <Text
-                    text={`${Math.ceil(altoPerfil)}`}
-                    rotation={90}
-                    x={(line.x1 + line.x2) / 2}
-                    y={(altoPerfil + line.y1) / 2}
-                    fontSize={12}
-                    fill="black"
-                  />
-                </>
-              )}
-            </React.Fragment>
-          ))
+                    // Si las coordenadas del perfil están dentro de la sección del portón, excluirlo
+                    if (
+                      seccionPorton &&
+                      line.x1 >= seccionPorton.xInicio &&
+                      line.x2 <= seccionPorton.xFin
+                    ) {
+                      return false; // Excluir este perfil
+                    }
+                  }
+                  return true; // Incluir el perfil
+                })
+                .map((line, index) => (
+                  <React.Fragment key={`perfil-${groupIndex}-${index}`}>
+                    <Line
+                      points={[line.x1, line.y1, line.x2, line.y2]}
+                      stroke="black"
+                      strokeWidth={1}
+                    />
+                    {groupIndex === 0 && (
+                      <>
+                        <Text
+                          text={`${Math.ceil(line.longitud)}`}
+                          x={(line.x1 + line.x2) / 2 - 20}
+                          y={line.y1 - 10}
+                          fontSize={12}
+                          fill="black"
+                          draggable
+                        />
+                        <Text
+                          text={`${Math.ceil(altoPerfil)}`}
+                          rotation={90}
+                          x={(line.x1 + line.x2) / 2}
+                          y={(altoPerfil + line.y1) / 2}
+                          fontSize={12}
+                          fill="black"
+                          draggable
+                        />
+                      </>
+                    )}
+                  </React.Fragment>
+                ))
+            )}
+        </>
       )}
     </>
   );

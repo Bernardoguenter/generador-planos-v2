@@ -1,22 +1,22 @@
 import { Line, Text } from "react-konva";
 import { Secciones } from "../../utils/types";
+import { useDrawContext } from "../../context/drawContext";
 
 interface Props {
   secciones: Secciones[];
   ubicacionPorton: number;
   altoPorton: number | undefined;
-  scaleFactor: number;
 }
 
 export const Porton = ({
   secciones,
   ubicacionPorton,
   altoPorton = 0,
-  scaleFactor,
 }: Props) => {
   // Calcular el índice de la sección del portón
   const seccionPortonIndex = ubicacionPorton - 1;
   const seccionPorton = secciones[seccionPortonIndex];
+  const { scaleFactor } = useDrawContext();
 
   if (!seccionPorton) return null;
 
@@ -50,6 +50,7 @@ export const Porton = ({
         fontSize={20}
         fill="black"
         align="center"
+        draggable
       />
     </>
   );

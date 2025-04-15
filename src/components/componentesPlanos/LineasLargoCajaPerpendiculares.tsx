@@ -53,6 +53,7 @@ export const LineasLargoCajaPerpendiculares = ({
         x={puntoFinPerpendicularIzqX - 10}
         y={puntoFinPerpendicularIzqY + 30}
         fill={"black"}
+        draggable
       />
     </>
   );

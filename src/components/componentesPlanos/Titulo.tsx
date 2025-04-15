@@ -1,13 +1,12 @@
 import { Text } from "react-konva";
 import { useValuesContext } from "../../context/valuesContext";
+import { useDrawContext } from "../../context/drawContext";
 
-interface Props {
-  scaleFactor: number;
-}
-
-export const Titulo = ({ scaleFactor }: Props) => {
+export const Titulo = () => {
   const { values } = useValuesContext();
   const { ancho, largo, alto, esFrente } = values;
+  const { scaleFactor } = useDrawContext();
+
   return (
     <Text
       text={`Galpón de ${ancho / 100}mts de ancho x ${
